@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI): 
-    create_task(keep_alive)
+    create_task(keep_alive())
     yield
 
 app = FastAPI(lifespan = lifespan)
