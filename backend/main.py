@@ -7,7 +7,7 @@ from server_utils import keep_alive
 from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
-def lifespan(app: FastAPI): 
+async def lifespan(app: FastAPI): 
     create_task(keep_alive)
     yield
 
