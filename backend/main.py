@@ -22,7 +22,7 @@ async def root():
 
     
 @app.post("/img_embedding")
-async def get_image_embeddings(file: UploadFile = File(...)):
+async def get_image_embeddings(file: UploadFile = File(...), website_name: str = "null.com"):
     # Read the image data from the uploaded file
     img_data = await file.read()
     img = Image.open(io.BytesIO(img_data))
