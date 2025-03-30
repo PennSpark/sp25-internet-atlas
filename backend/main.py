@@ -32,3 +32,7 @@ async def get_image_embeddings(file: UploadFile = File(...), website_name: str =
     image_embeddings, text_embeddings = make_clip_embedding(img, description=description)
     
     return {"image_embedding": image_embeddings, "text_embedding": text_embeddings}
+
+
+@app.post("/search")
+async def get_website_distances()
