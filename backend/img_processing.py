@@ -53,3 +53,32 @@ def make_clip_embedding(img: Image.Image, description: str):
     
     # Return the embeddings as NumPy arrays
     return image_embeddings, text_embeddings
+
+# For site content
+def clip_text_embedding(text: str):
+    # Tokenize the text for CLIP
+    inputs = clip_processor(text=[text], return_tensors="pt", padding=True).to(clip_model.device)
+
+    with torch.no_grad():
+        # Extract the embedding
+        text_features = clip_model.get_text_features(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"]
+        )
+
+    return text_features[0].cpu().numpy().flatten().tolist()\
+
+# Takes in any number of embeddings and combines them into one vector
+def combine_embeddings(*embeddings, method="concat"):
+    if method == "concat":
+        return np.concatenate(embeddings).tolist()
+    elif method == "mean":
+        return np.mean(embeddings, axis=0).tolist()
+    else:
+        raise ValueError("Invalid combination method: use 'concat' or 'mean'")
+
+# Generates full website embedding with image, caption, real text
+def embed_website(img: Image.Image, description: str, raw_text: str, method: str = "concat") -> list:
+    image_emb, caption_emb = make_clip_embedding(img, description)
+    text_emb = clip_text_embedding(raw_text)
+    return combine_embeddings(image_emb, caption_emb, text_emb, method=method)

@@ -22,7 +22,7 @@ async def root():
 
     
 @app.post("/img_embedding")
-async def get_image_embeddings(file: UploadFile = File(...), website_name: str = "null.com"):
+async def get_image_embeddings(file: UploadFile = File(...)):
     # Read the image data from the uploaded file
     img_data = await file.read()
     img = Image.open(io.BytesIO(img_data))
@@ -36,3 +36,42 @@ async def get_image_embeddings(file: UploadFile = File(...), website_name: str =
 
 @app.post("/search")
 async def get_website_distances()
+
+
+@app.post("/embed_website")
+async def embed_website_api(
+    file: UploadFile = File(...),
+    text: str = Form(...),
+    url: str = Form(None)
+):
+    # 1. Read image
+    img_data = await file.read()
+    img = Image.open(io.BytesIO(img_data))
+
+    # 2. Generate BLIP description
+    description = generate_description(img)
+
+    # 3. Get combined embedding
+    combined_emb = embed_website(img, description, raw_text=text, method="concat")
+
+    # 4. Create unique ID and store in Pinecone
+    vector_id = str(uuid.uuid4())
+    index.upsert(
+        vectors=[
+            {
+                "id": vector_id,
+                "values": combined_emb,
+                "metadata": {
+                    "caption": description,
+                    "text": text[:500],
+                    "url": url or "unknown"
+                }
+            }
+        ]
+    )
+
+    return {
+        "status": "success",
+        "vector_id": vector_id,
+        "caption": description
+    }
