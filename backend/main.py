@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile
 from PIL import Image
 import io
 from img_processing import generate_description, make_clip_embedding
+from img_search import compute_sites_with_distances
 from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv
 import os
@@ -34,8 +35,12 @@ async def get_image_embeddings(file: UploadFile = File(...)):
     return {"image_embedding": image_embeddings, "text_embedding": text_embeddings}
 
 
-@app.post("/search")
-async def get_website_distances()
+@app.post("/keyword-sorting")
+async def get_website_distances(keyword: str, amt: int):
+    # get the website names with their score
+
+    websites = compute_sites_with_distances(keyword, amt, index)
+    # get rest of metadata for the graph representation
 
 
 @app.post("/embed_website")
