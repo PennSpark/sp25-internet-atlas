@@ -9,4 +9,4 @@ async def keep_alive():
                 await client.get("https://internet-atlas.onrender.com/", timeout = 10.0)
         except Exception as e:
             print(e)
-        await asyncio.sleep(600)
+        await asyncio.sleep(300)
