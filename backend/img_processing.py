@@ -1,6 +1,9 @@
-from transformers import BlipProcessor, BlipForConditionalGeneration, CLIPProcessor, CLIPModel
+from transformers import BlipProcessor, BlipForConditionalGeneration, CLIPProcessor, CLIPModel 
 import torch
+from fastapi import FastAPI, File, UploadFile, Form
 from PIL import Image
+import io
+import numpy as np
 
 # Load the BLIP model and processor
 blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")  
@@ -9,6 +12,37 @@ blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image
 # Load the CLIP model and processor
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to("cuda" if torch.cuda.is_available() else "cpu")
+
+
+async def get_image_embeddings(files: list[UploadFile] = File(...)):
+    all_combined_embeddings = []
+    
+    # Process each uploaded image
+    for file in files:
+        print("proc file")
+        # Read the image data from the uploaded file
+        img_data = await file.read()
+        img = Image.open(io.BytesIO(img_data))
+
+        # Generate the description based on the uploaded image
+        description = generate_description(img)
+        
+        # Get individual image and text embeddings
+        image_embeddings, text_embeddings = make_clip_embedding(img, description=description)
+
+        # Combine the image and text embeddings (e.g., by averaging or concatenating)
+        # Option 1: Average the image and text embeddings
+        combined_embedding = np.mean([image_embeddings, text_embeddings], axis=0)
+
+        # Append the combined embedding to the list
+        all_combined_embeddings.append(combined_embedding)
+    
+    # Aggregate all combined embeddings (mean across all images)
+    combined_final_embedding = np.mean(all_combined_embeddings, axis=0).tolist()
+
+    # Return the final aggregated vector that captures the "mood/vibe"
+    
+    return combined_final_embedding
 
 def generate_description(img: Image.Image):
     # Try different prompts to get more detailed descriptions
@@ -25,7 +59,6 @@ def generate_description(img: Image.Image):
     
     descriptions = []
     for prompt in prompts:
-        print("doing it")
         inputs = blip_processor(img, text=prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
         output = blip_model.generate(**inputs, min_length=30, max_length=70, num_beams=1, temperature=0.8, do_sample=True)
         description = blip_processor.decode(output[0], skip_special_tokens=True)
@@ -66,19 +99,5 @@ def clip_text_embedding(text: str):
             attention_mask=inputs["attention_mask"]
         )
 
-    return text_features[0].cpu().numpy().flatten().tolist()\
+    return text_features[0].cpu().numpy().flatten().tolist()
 
-# Takes in any number of embeddings and combines them into one vector
-def combine_embeddings(*embeddings, method="concat"):
-    if method == "concat":
-        return np.concatenate(embeddings).tolist()
-    elif method == "mean":
-        return np.mean(embeddings, axis=0).tolist()
-    else:
-        raise ValueError("Invalid combination method: use 'concat' or 'mean'")
-
-# Generates full website embedding with image, caption, real text
-def embed_website(img: Image.Image, description: str, raw_text: str, method: str = "concat") -> list:
-    image_emb, caption_emb = make_clip_embedding(img, description)
-    text_emb = clip_text_embedding(raw_text)
-    return combine_embeddings(image_emb, caption_emb, text_emb, method=method)

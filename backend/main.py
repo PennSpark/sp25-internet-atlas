@@ -1,12 +1,13 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from PIL import Image 
 import io
-from img_processing import generate_description, make_clip_embedding, embed_website
-from img_search import compute_sites_with_distances
+from img_processing import get_image_embeddings
+from text_processing import get_text_embeddings
 from pinecone import Pinecone 
 from dotenv import load_dotenv
 import os
 import uuid
+import numpy as np
 
 
 load_dotenv()
@@ -23,61 +24,62 @@ async def root():
     return {"message": "Hello World"}
 
     
-@app.post("/img_embedding")
-async def get_image_embeddings(file: UploadFile = File(...)):
-    # Read the image data from the uploaded file
-    img_data = await file.read()
-    img = Image.open(io.BytesIO(img_data))
+from fastapi import FastAPI, File, UploadFile
+from PIL import Image
+import io
+import numpy as np
+from img_processing import generate_description, make_clip_embedding
 
-    # Generate the description based on the uploaded image
-    description = generate_description(img)
-    image_embeddings, text_embeddings = make_clip_embedding(img, description=description)
-    
-    return {"image_embedding": image_embeddings, "text_embedding": text_embeddings}
+app = FastAPI()
 
 
-@app.post("/keyword-sorting")
-async def get_website_distances(keyword1: str, keyword2: str, amt: int):
-    # get the website names with their score
 
-    websites = compute_sites_with_distances(keyword1, keyword2, amt, index)
-    # get rest of metadata for the graph representation
-
-
-@app.post("/embed_website")
+@app.post("/embed-website")
 async def embed_website_api(
-    file: UploadFile = File(...),
+    files: list[UploadFile] = File(...),
     text: str = Form(...),
-    url: str = Form(None)
+    url: str = Form(...)
 ):
-    # 1. Read image
-    img_data = await file.read()
-    img = Image.open(io.BytesIO(img_data))
+    img_embed = await get_image_embeddings(files)
+    text_embed = get_text_embeddings(text)
 
-    # 2. Generate BLIP description
-    description = generate_description(img)
-
-    # 3. Get combined embedding
-    combined_emb = embed_website(img, description, raw_text=text, method="concat")
-
-    # 4. Create unique ID and store in Pinecone
-    vector_id = str(uuid.uuid4())
+    final_embedding = np.mean([img_embed, text_embed], axis=0)  # Average the embeddings
+    
     index.upsert(
-        vectors=[
-            {
-                "id": vector_id,
-                "values": combined_emb,
-                "metadata": {
-                    "caption": description,
-                    "text": text[:500],
-                    "url": url or "unknown"
-                }
-            }
-        ]
+        vectors=[{
+            "id": url,
+            "values": final_embedding.tolist(),
+        }],
+        namespace=""
     )
-
     return {
         "status": "success",
-        "vector_id": vector_id,
-        "caption": description
+        "embedding": final_embedding.tolist(),
+        "url": url
+    }
+
+    
+@app.post("/search_vectors")
+async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)):
+    # Get text embeddings for the search query
+    text_search_embedding = get_text_embeddings(query)
+    
+    # Query Pinecone index for the k closest vectors
+    search_results = index.query(
+        vector=text_search_embedding,
+        top_k=k_returns,
+        include_values=False,  # Set to True if you want the actual vector values
+        include_metadata=True  # Include metadata to get URLs and text snippets
+    )
+    
+    # Format results for API response
+    formatted_results = []
+    for match in search_results.matches:
+        formatted_results.append({"id": match.get("id", ""), "score": match.get("score", 0)})
+    
+    return {
+        "status": "success",
+        "query": query,
+        "results_count": len(formatted_results),
+        "results": formatted_results
     }
