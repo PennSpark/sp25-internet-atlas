@@ -3,7 +3,7 @@ from transformers import DistilBertTokenizer, DistilBertModel
 
 # Load BERT model and tokenizer
 tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+model = DistilBertModel.from_pretrained("distilbert-base-uncased").to("cuda" if torch.cuda.is_available() else "cpu")
 
 # Define projection layer outside the function to ensure it's consistent across calls
 linear_projection = torch.nn.Linear(768, 512)
