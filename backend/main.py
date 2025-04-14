@@ -1,38 +1,25 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Query
 from PIL import Image 
 import io
 from img_processing import get_image_embeddings
 from text_processing import get_text_embeddings
-from pinecone import Pinecone 
+from pinecone import Pinecone, QueryResponse
 from dotenv import load_dotenv
 import os
 import uuid
 import numpy as np
-
+from typing import Optional
+from collections import defaultdict
 
 load_dotenv()
-
-
 
 app = FastAPI()
 pc = Pinecone(api_key=os.getenv("PINECONE_KEY"))
 index = pc.Index(host=os.getenv("PINECONE_INDEX_HOST"))
 
-
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-    
-from fastapi import FastAPI, File, UploadFile
-from PIL import Image
-import io
-import numpy as np
-from img_processing import generate_description, make_clip_embedding
-
-app = FastAPI()
-
-
 
 @app.post("/embed-website")
 async def embed_website_api(
@@ -57,7 +44,6 @@ async def embed_website_api(
         "embedding": final_embedding.tolist(),
         "url": url
     }
-
     
 @app.post("/search_vectors")
 async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)):
@@ -82,4 +68,41 @@ async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)
         "query": query,
         "results_count": len(formatted_results),
         "results": formatted_results
+    }
+
+@app.get("/get_coordinates")
+async def get_coordinates(axis1: str = Query(...), axis2: str = Query(...), axis3: Optional[str] = Query(None), k_returns: int = Query(500)):
+
+    queries = [axis1, axis2, axis3] if axis3 else [axis1, axis2]
+
+    # Get text embeddings for the search query
+    search_embeddings = [get_text_embeddings(q) for q in queries]
+    
+    # Query Pinecone index for the k closest vectors
+    search_results = [index.query(
+        vector=embedding,
+        top_k=k_returns,
+        include_values=False,  # Set to True if you want the actual vector values
+        include_metadata=True  # Include metadata to get URLs and text snippets
+    ) for embedding in search_embeddings]
+    
+    formatted_results = [
+        [{"id": match.get("id", ""), "score": match.get("score", 0)} for match in search_result.matches]
+        for search_result in search_results
+    ]
+
+    merged_dict = defaultdict(list)
+
+    for result_list in formatted_results:
+        for item in result_list:
+            merged_dict[item['id']].append(item['score'])
+
+    merged_results = [{'id': id_, 'scores': tuple(scores)} for id_, scores in merged_dict.items()]
+    
+    return {
+        "status": "success",
+        "queries": queries,
+        "axis_count": len(merged_results[0]) if merged_results else -1,
+        "results_count": len(merged_results),
+        "results": merged_results
     }
