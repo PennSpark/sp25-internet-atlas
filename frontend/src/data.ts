@@ -1,80 +1,33 @@
-export const data = [
-    {
-      "website": "TWITTER",
-      "users": "user1",
-      "nextNode": "YOUTUBE",
-      "visitNumber": 5,
-      "visitTime": 200,
-      "avgTime": 40,
-      "type": "landmark",
-      "x": 90,
-      "y": 90
-    },
-    {
-      "website": "YOUTUBE",
-      "users": "user2",
-      "nextNode": "NETFLIX",
-      "visitNumber": 3,
-      "visitTime": 150,
-      "avgTime": 50,
-      "type": "landmark",
-      "x": 30,
-      "y": 10
-    },
-    {
-      "website": "NETFLIX",
-      "users": "user3",
-      "nextNode": "DISNEY_PLUS",
-      "visitNumber": 21,
-      "visitTime": 400,
-      "avgTime": 50,
-      "type": "landmark",
-      "x": 20,
-      "y": 30
-    },
-    {
-      "website": "DISNEY_PLUS",
-      "users": "user4",
-      "nextNode": "TWITTER", 
-      "visitNumber": 10,
-      "visitTime": 300,
-      "avgTime": 60,
-      "type": "landmark",
-      "x": 70,
-      "y": 50
-    },
-    {
-      "website": "INSTAGRAM",
-      "users": "user5",
-      "nextNode": "TWITTER", 
-      "visitNumber": 15,
-      "visitTime": 250,
-      "avgTime": 55,
-      "type": "landmark",
-      "x": 50,
-      "y": 80
-    },
-    {
-      "website": "FACEBOOK",
-      "users": "user6",
-      "nextNode": "YOUTUBE",  // Shared child with YOUTUBE
-      "visitNumber": 8,
-      "visitTime": 220,
-      "avgTime": 45,
-      "type": "landmark",
-      "x": 40,
-      "y": 40
-    },
-    {
-      "website": "TIKTOK",
-      "users": "user7",
-      "nextNode": "NETFLIX",  // Shared child with NETFLIX
-      "visitNumber": 18,
-      "visitTime": 350,
-      "avgTime": 50,
-      "type": "landmark",
-      "x": 80,
-      "y": 60
-    }
-  ];
-  
+// data/graphData.ts
+export const nodes = [
+  { id: 'GOOGLE', name: 'Google', val: 10, x: 0, y: 0 },
+  { id: 'YOUTUBE', name: 'YouTube', val: 12, x: 10, y: 0 },
+  { id: 'FACEBOOK', name: 'Facebook', val: 8, x: -10, y: 10 },
+  { id: 'INSTAGRAM', name: 'Instagram', val: 9, x: 0, y: 10 },
+  { id: 'TWITTER', name: 'Twitter', val: 7, x: 10, y: 10 },
+  { id: 'REDDIT', name: 'Reddit', val: 6, x: -10, y: -10 },
+  { id: 'NETFLIX', name: 'Netflix', val: 15, x: 20, y: 0 },
+  { id: 'DISNEY_PLUS', name: 'Disney+', val: 6, x: 20, y: 10 },
+  { id: 'AMAZON', name: 'Amazon', val: 13, x: -20, y: -5 },
+  { id: 'WIKIPEDIA', name: 'Wikipedia', val: 5, x: -5, y: -5 },
+  { id: 'TIKTOK', name: 'TikTok', val: 11, x: -30, y: 0 },
+  { id: 'LINKEDIN', name: 'LinkedIn', val: 4, x: -15, y: 5 }
+];
+
+export const edges = [
+  { source: 'GOOGLE', target: 'YOUTUBE', user: 'userA', curvature: 0.2, rotation: 0 },
+  { source: 'YOUTUBE', target: 'NETFLIX', user: 'userA', curvature: 0.2, rotation: 0 },
+  { source: 'REDDIT', target: 'WIKIPEDIA', user: 'userB', curvature: 0.3, rotation: Math.PI / 4 },
+  { source: 'WIKIPEDIA', target: 'YOUTUBE', user: 'userB', curvature: 0.2, rotation: Math.PI / 8 },
+  { source: 'YOUTUBE', target: 'DISNEY_PLUS', user: 'userB', curvature: 0.3, rotation: -Math.PI / 4 },
+  { source: 'FACEBOOK', target: 'INSTAGRAM', user: 'userC', curvature: 0.4, rotation: 0 },
+  { source: 'INSTAGRAM', target: 'YOUTUBE', user: 'userC', curvature: 0.2, rotation: Math.PI / 6 },
+  { source: 'YOUTUBE', target: 'NETFLIX', user: 'userC', curvature: 0.4, rotation: Math.PI / 3 },
+  { source: 'AMAZON', target: 'REDDIT', user: 'userD', curvature: 0.2, rotation: -Math.PI / 4 },
+  { source: 'REDDIT', target: 'TWITTER', user: 'userD', curvature: 0.3, rotation: -Math.PI / 6 },
+  { source: 'TWITTER', target: 'NETFLIX', user: 'userD', curvature: 0.3, rotation: Math.PI / 8 },
+  { source: 'LINKEDIN', target: 'WIKIPEDIA', user: 'userE', curvature: 0.4, rotation: Math.PI / 3 },
+  { source: 'WIKIPEDIA', target: 'AMAZON', user: 'userE', curvature: 0.3, rotation: -Math.PI / 3 },
+  { source: 'AMAZON', target: 'TIKTOK', user: 'userE', curvature: 0.2, rotation: 0 },
+  { source: 'YOUTUBE', target: 'NETFLIX', user: 'userB', curvature: 0.4, rotation: Math.PI }
+];
