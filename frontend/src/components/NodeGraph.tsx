@@ -1,14 +1,23 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CircleSelector from "./CircleSelector"
 
 export default function NodeGraph() {
     const [descriptorX, setDescriptorX] = useState<string | null>(null)
     const [descriptorY, setDescriptorY] = useState<string | null>(null)
+    const navigate = useNavigate()
+
+    const handleLogoClick = () => {
+        navigate('/')
+    }
 
     return (
         <div className="relative w-full h-screen bg-black text-white">
             {/* Logo */}
-            <div className="absolute top-8 left-8">
+            <div 
+                className="absolute top-8 left-8 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={handleLogoClick}
+            >
                 <div className="w-12 h-12">
                     <img src="/logo.png" alt="Logo" className="w-full h-full" />
                 </div>

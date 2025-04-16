@@ -17,6 +17,7 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
     const initialAngle = useRef(0);
     const currentDragAngle = useRef(0);
 
+    // Position the words around the circle
     useEffect(() => {
         if (circleRef.current) {
             categories.forEach((item, index) => {
@@ -25,30 +26,7 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
                 wordElement.style.transform = `rotate(${angle}deg) translateY(-${radius}px)`;
             });
         }
-    }, [increment]);
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        isDragging.current = true;
-        startAngle.current = getAngle(e.clientX, e.clientY);
-        initialAngle.current = angle;
-    };
-
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (isDragging.current) {
-            const newAngle = getAngle(e.clientX, e.clientY);
-            const deltaAngle = newAngle - startAngle.current;
-            const resultAngle = initialAngle.current - deltaAngle;
-            setAngle(resultAngle);
-            currentDragAngle.current = resultAngle;
-        }
-    }, []);
-    
-    
-
-    const handleMouseUp = useCallback(() => {
-        isDragging.current = false;
-        snapToNearestWord();
-    }, []);
+    }, [increment, categories, radius]);
 
     const getAngle = (mouseXPos: number, mouseYPos: number) => {
         const circleCenterX = window.innerWidth / 2;
@@ -60,19 +38,45 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
         return angleDeg;
     };
 
+    const handleMouseDown = (e: React.MouseEvent) => {
+        isDragging.current = true;
+        startAngle.current = getAngle(e.clientX, e.clientY);
+        initialAngle.current = angle;
+    };
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (isDragging.current) {
+            const newAngle = getAngle(e.clientX, e.clientY);
+            const deltaAngle = newAngle - startAngle.current;
+            // Subtract deltaAngle to rotate in the desired direction
+            const resultAngle = initialAngle.current - deltaAngle;
+            setAngle(resultAngle);
+            currentDragAngle.current = resultAngle;
+        }
+    }, []);
+
     const snapToNearestWord = () => {
         let rawAngle = currentDragAngle.current % 360;
         if (rawAngle < 0) rawAngle += 360;
-    
-        const nearestIndex = Math.round(rawAngle / increment) % categories.length;
-        setSelectedCategory(nearestIndex);
-        setAngle(-nearestIndex * increment);
+
+        // Get the nearest index based on rawAngle
+        const nearestIndex = Math.round(rawAngle / increment);
+        // Invert the index so that the highlight ordering matches the visual wheel
+        const invertedIndex = ((categories.length - nearestIndex) % categories.length + categories.length) % categories.length;
+        
+        setSelectedCategory(invertedIndex);
+        // Use negative angle for consistency with handleWordClick
+        setAngle(-invertedIndex * increment);
+
         if (onSelect) {
-            onSelect(categories[nearestIndex]);
+            onSelect(categories[invertedIndex]);
         }
     };
-    
-    
+
+    const handleMouseUp = useCallback(() => {
+        isDragging.current = false;
+        snapToNearestWord();
+    }, []);
 
     const handleWordClick = (index: number) => {
         setSelectedCategory(index);
@@ -98,7 +102,7 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
         >
             {/* Inner white circle */}
             <div 
-                className="absolute w-[250px] h-[250px] rounded-full bg-white "
+                className="absolute w-[250px] h-[250px] rounded-full bg-white"
                 style={{
                     transform: 'translate(-50%, -50%)',
                     left: '50%',
@@ -126,7 +130,7 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
                         }}
                         onClick={() => handleWordClick(index)}
                     >
-                        <p className='rotate-180'>{item}</p>
+                        <p className="rotate-180">{item}</p>
                     </div>
                 ))}
             </div>
@@ -134,7 +138,7 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
             <div
                 className="absolute -top-10 w-[15px] h-[12px] rotate-180"
                 style={{
-                    backgroundImage: 'url(/wheel-arrow.svg',
+                    backgroundImage: 'url(/wheel-arrow.svg)',
                     backgroundSize: 'contain',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',  

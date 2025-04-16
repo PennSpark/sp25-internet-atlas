@@ -29,7 +29,12 @@ export default function InternetAtlas() {
 
   const handleNodeClick = (nodeId: string) => {
     if (nodeId === "enter") {
-      navigate('/visualization')
+      // First highlight the ENTER node
+      setSelectedNode("enter" as NodeId)
+      // Then navigate after a short delay to show the highlight
+      setTimeout(() => {
+        navigate('/visualization')
+      }, 300)
       return
     }
     setSelectedNode(prevNode => prevNode === nodeId ? null : nodeId as NodeId)
@@ -58,9 +63,9 @@ export default function InternetAtlas() {
       </div>
 
       {/* Main content */}
-      <div className="flex w-full h-full">
-        {/* Left side - Force Graph */}
-        <div className="w-1/2 h-full">
+      <div className="w-full h-full">
+        {/* Force Graph - now spans full width */}
+        <div className="absolute inset-0">
           <ForceGraph 
             nodes={nodes} 
             links={links} 
@@ -70,14 +75,14 @@ export default function InternetAtlas() {
         </div>
 
         {/* Right side - Slides */}
-        <div className="w-1/2 h-full">
-          {selectedNode && slides[selectedNode] && (
+        {selectedNode && slides[selectedNode] && (
+          <div className="absolute right-0 w-1/2 h-full">
             <SlideShow 
               slides={slides[selectedNode]} 
               selectedNode={selectedNode}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
