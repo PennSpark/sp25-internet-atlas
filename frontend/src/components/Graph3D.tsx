@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import ForceGraph3D, { ForceGraph3DInstance } from '3d-force-graph';
+import * as THREE from 'three';
 
 interface NodeType {
   id: string;
@@ -40,33 +41,51 @@ export default function Graph3D({ data }: Graph3DProps) {
     const graph = ForceGraph3D()(containerRef.current);
     fgRef.current = graph;
 
+    const resize = () => {
+      if (containerRef.current) {
+        const { offsetWidth, offsetHeight } = containerRef.current;
+        graph.width(offsetWidth);
+        graph.height(offsetHeight);
+      }
+    };
+
+    // Initial size
+    resize();
+
     graph
       .graphData(data)
       .nodeAutoColorBy('id')
       .nodeLabel('name')
-      .nodeThreeObjectExtend(true)
+      .nodeThreeObject((node) => {
+        const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: node.color || 'orange' });
+        return new THREE.Mesh(sphereGeometry, sphereMaterial);
+      })
+      .nodeThreeObjectExtend(false)
       .linkCurvature('curvature')
       .linkCurveRotation('rotation')
-      .linkDirectionalParticles(2)
-      .linkOpacity(0.4)
-      .linkWidth(1)
-      .backgroundColor('#111827')
+      .linkDirectionalParticles(1)
+      .linkOpacity(0.5)
+      .linkWidth(0.1)
+      .backgroundColor('black')
       .cameraPosition({ z: 100 });
 
     graph.controls().enableZoom = true;
 
-    // ✅ Set node positions *after* node objects are created
     graph.onEngineTick(() => {
-      for (const node of data.nodes) {
+      data.nodes.forEach((node) => {
         const obj = graph.nodeThreeObject()(node);
         if (obj) {
           obj.position.set(node.x ?? 0, node.y ?? 0, node.z ?? 0);
         }
-      }
+      });
     });
+
+    window.addEventListener('resize', resize);
 
     return () => {
       fgRef.current = null;
+      window.removeEventListener('resize', resize);
     };
   }, [data]);
 
