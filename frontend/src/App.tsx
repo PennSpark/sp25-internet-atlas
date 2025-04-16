@@ -1,17 +1,14 @@
-import Graph3D from './components/Graph3D';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingScreen from './LandingScreen';
-import { nodes, edges } from './data'; // adjust path as needed
+import NodeGraph from './components/NodeGraph';
 
-const graphData = {
-  nodes,
-  links: edges
-};
-
-export default function Home() {
+export default function App() {
   return (
-    <main className="w-full h-screen">
-      {/* <Graph3D data={graphData} /> */}
-      <LandingScreen />
-    </main>
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingScreen />} />
+        <Route path="/visualization" element={<NodeGraph />} />
+      </Routes>
+    </Router>
   );
 }

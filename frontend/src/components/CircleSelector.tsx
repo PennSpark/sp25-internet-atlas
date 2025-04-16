@@ -1,10 +1,13 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-const categories = ['piece', 'heavy', 'organic', 'ash', 'light', 'soft', 'silk', 'smooth', 'sharp', 'fuzzy'];
+interface CircleSelectorProps {
+    onSelect?: (value: string) => void
+}
 
-export default function CircleSelector() {
+export default function CircleSelector({ onSelect }: CircleSelectorProps) {
     const radius = 150;
+    const categories = ['piece', 'heavy', 'organic', 'ash', 'light', 'soft', 'silk', 'smooth', 'sharp', 'fuzzy'];
     const increment = 360 / categories.length;
     const [angle, setAngle] = useState(0);
     const [selectedCategory, setSelectedCategory] = useState<number>(0);
@@ -13,7 +16,6 @@ export default function CircleSelector() {
     const startAngle = useRef(0);
     const initialAngle = useRef(0);
     const currentDragAngle = useRef(0);
-
 
     useEffect(() => {
         if (circleRef.current) {
@@ -65,6 +67,9 @@ export default function CircleSelector() {
         const nearestIndex = Math.round(rawAngle / increment) % categories.length;
         setSelectedCategory(nearestIndex);
         setAngle(-nearestIndex * increment);
+        if (onSelect) {
+            onSelect(categories[nearestIndex]);
+        }
     };
     
     
@@ -72,6 +77,9 @@ export default function CircleSelector() {
     const handleWordClick = (index: number) => {
         setSelectedCategory(index);
         setAngle(-index * increment);
+        if (onSelect) {
+            onSelect(categories[index]);
+        }
     };
 
     useEffect(() => {
@@ -88,6 +96,16 @@ export default function CircleSelector() {
             className="relative z-[30] circle-selector instrument-serif flex justify-center items-center cursor-pointer w-[300px] h-[300px] rounded-full border border-black m-auto"
             onMouseDown={handleMouseDown}
         >
+            {/* Inner white circle */}
+            <div 
+                className="absolute w-[250px] h-[250px] rounded-full bg-white "
+                style={{
+                    transform: 'translate(-50%, -50%)',
+                    left: '50%',
+                    top: '50%',
+                }}
+            />
+            
             <div
                 ref={circleRef}
                 className="absolute flex justify-center items-center w-full h-full"
@@ -102,7 +120,9 @@ export default function CircleSelector() {
                         className="absolute text-center text-lg cursor-pointer select-none"
                         style={{
                             transformOrigin: 'center center',
-                            color: 'white',
+                            color: index === selectedCategory ? '#ffffff' : '#757575',
+                            opacity: index === selectedCategory ? 1 : 0.7,
+                            transition: 'color 0.3s, opacity 0.3s'
                         }}
                         onClick={() => handleWordClick(index)}
                     >

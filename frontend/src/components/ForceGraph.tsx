@@ -93,6 +93,8 @@ export default function ForceGraph({
       .attr("stroke-dasharray", d => d.isDashed ? "5,5" : "none")
       .style("opacity", d => {
         if (!selectedNode) return 1
+        // Don't highlight lines when purpose node is selected
+        if (selectedNode === "purpose") return 0.2
         return (d.source as Node).id === selectedNode || (d.target as Node).id === selectedNode ? 1 : 0.2
       })
 
@@ -105,6 +107,8 @@ export default function ForceGraph({
       .attr("fill", d => d.isDashed ? "#757575" : "#0b9b79")
       .style("opacity", d => {
         if (!selectedNode) return 1
+        // Don't highlight dots when purpose node is selected
+        if (selectedNode === "purpose") return 0.2
         return (d.source as Node).id === selectedNode || (d.target as Node).id === selectedNode ? 1 : 0.2
       })
 

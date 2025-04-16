@@ -2,12 +2,14 @@
 
 import { Plus } from "lucide-react"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import ForceGraph from './components/ForceGraph'
 import SlideShow from './components/SlideShow'
 import { slides, NodeId } from './data/slides'
 
 export default function InternetAtlas() {
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null)
+  const navigate = useNavigate()
 
   // Define the nodes and links
   const nodes = [
@@ -26,7 +28,10 @@ export default function InternetAtlas() {
   ]
 
   const handleNodeClick = (nodeId: string) => {
-    if (nodeId === "enter") return
+    if (nodeId === "enter") {
+      navigate('/visualization')
+      return
+    }
     setSelectedNode(prevNode => prevNode === nodeId ? null : nodeId as NodeId)
   }
 
