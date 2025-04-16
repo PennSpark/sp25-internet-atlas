@@ -24,14 +24,26 @@ export interface Slide {
       },
       {
         title: "Step 1: Data Collection",
-        content: "Our data comes from a open source market researchdataset of 1 million user sessions on the internet.",
-        figure: "/figure2.png"
+        content: "Our data comes from a open source NIH dataset of online browsing behavior of 2,148 users.",
+        figure: "/figure1.png"
       },
       {
         title: "Step 2: Data Processing",
-        content: "We use a combination of data visualization and machine learning tools to create comprehensive views of internet infrastructure.",
+        content: "We use motimodal vector embeddings to represent the browsing history of each user with text and image contents.",
         figure: "/figure2.png"
       },
+      {
+        title: "Step 3: Data Clustering",
+        content: "Utilizing Principal Component Analysis (PCA), we generate clusters of websites based on their vector embeddings.",
+        figure: "/figure3.png"
+      },
+      {
+        title: "Step 4: Data Visualization",
+        content: "We visualize the clusters of websites on a 3D graph.",
+        figure: "/figure4.png"
+      },
+      
+      
       
     ],
     involved: [
@@ -43,7 +55,7 @@ export interface Slide {
     team: [
       {
         title: "Our Team",
-        content: `We are part of Penn Spark, a student-run club at the University of Pennsylvania for tech and design. The team members are: Brandon, David, Eric, Estelle (PL), Fiona, Jimin, Joseph, and Ruth (PL).`,
+        content: `We are part of Penn Spark, a student-run club at the University of Pennsylvania that bridges tech and design. The team members are: Brandon, David, Eric, Estelle (PL), Fiona, Jimin, Joseph, and Ruth (PL).`,
       }
     ]
   }
