@@ -44,6 +44,7 @@ async def embed_website_api(
     text_embed = get_text_embeddings(text)
 
     final_embedding = np.mean([img_embed, text_embed], axis=0)  # Average the embeddings
+    ##consider final_embedding = 0.7 * np.array(img_embed) + 0.3 * np.array(text_embed) for better weighting??
     
     index.upsert(
         vectors=[{
@@ -83,3 +84,7 @@ async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)
         "results_count": len(formatted_results),
         "results": formatted_results
     }
+
+@app.post("/scrape-website")
+async def scrape_url(url: str = Form(...)):
+    print("todo")
