@@ -1,52 +1,49 @@
 export interface Slide {
-  title: string
-  content: string
-  figure?: string
-}
-
-export type NodeId = "purpose" | "how" | "involved" | "team"
-
-export const slides: Record<NodeId, Slide[]> = {
-  purpose: [
-    {
-      title: "Our Purpose",
-      content: "We are a collective of artists, technologists, and designers who are passionate about mapping and visualizing the internet's infrastructure.",
-      figure: "/figure1.png"
-    },
-    {
-      title: "Why It Matters",
-      content: "Understanding the internet's physical and logical infrastructure is crucial for building a more resilient and accessible digital future.",
-    }
-  ],
-  how: [
-    {
-      title: "How does it work?",
-      content: "We use a combination of data visualization, network mapping, and interactive tools to create comprehensive views of internet infrastructure.",
-    },
-    {
-      title: "Our Methods",
-      content: "Our process involves collecting data from various sources, analyzing network patterns, and creating interactive visualizations.",
-      figure: "/figure2.png"
-    }
-  ],
-  involved: [
-    {
-      title: "Get Involved",
-      content: "Join our community of researchers, artists, and technologists in mapping the internet's infrastructure.",
-    },
-    {
-      title: "How to Contribute",
-      content: "You can contribute by sharing data, creating visualizations, or participating in our research projects.",
-    }
-  ],
-  team: [
-    {
-      title: "Our Team",
-      content: "We are a diverse group of professionals committed to making the internet's infrastructure more transparent and understandable.",
-    },
-    {
-      title: "Join Us",
-      content: "We're always looking for passionate individuals to join our team and contribute to this important work.",
-    }
-  ]
-} 
+    title: string
+    content: string
+    figure?: string
+  }
+  
+  export type NodeId = "purpose" | "how" | "involved" | "team"
+  
+  export const slides: Record<NodeId, Slide[]> = {
+    purpose: [
+      {
+        title: "Mission Statement",
+        content: "Now more than ever it is important to be conscious of spaces (digital or physical) that we inhibit. Internet Atlas is meant to instill awareness into time we spend on areas of the net and how that reflects something about us as people － what do we want our footprints to say about us? ",
+      },
+      {
+        title: "About This Project",
+        content: "Internet Atlas is an internet mapping project where we trace how users travel across websites, visualizing personal trends and larger emergent patterns in a coordinate map system that is user-defined. In a more poetic imagining of the web, we hope to create an insightful and interactive experience of reflecting on the time we spend.",
+      }
+    ],
+    how: [
+      {
+        title: "How does it work?",
+        content: "We use a combination of data visualization and machine learning tools to create comprehensive views of internet infrastructure.",
+      },
+      {
+        title: "Step 1: Data Collection",
+        content: "Our data comes from a open source market researchdataset of 1 million user sessions on the internet.",
+        figure: "/figure2.png"
+      },
+      {
+        title: "Step 2: Data Processing",
+        content: "We use a combination of data visualization and machine learning tools to create comprehensive views of internet infrastructure.",
+        figure: "/figure2.png"
+      },
+      
+    ],
+    involved: [
+      {
+        title: "Get Involved",
+        content: "Email upennspark@gmail.com for more information on how to get involved with our projects.",
+      }
+    ],
+    team: [
+      {
+        title: "Our Team",
+        content: `We are part of Penn Spark, a student-run club at the University of Pennsylvania for tech and design. The team members are: Brandon, David, Eric, Estelle (PL), Fiona, Jimin, Joseph, and Ruth (PL).`,
+      }
+    ]
+  }
