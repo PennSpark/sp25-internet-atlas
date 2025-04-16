@@ -1,23 +1,79 @@
-export default function LandingScreen() {
-    return (
-        <div
-        style={{
-            backgroundColor: 'black',
-            color: 'white',
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-            paddingTop: '3rem',
-            justifyContent: 'center',
-            alignItems: 'center',
-            fontSize: '2rem',
-            backgroundImage: 'url(/landing.svg)',
-            backgroundPosition: 'center',
-        }}>
-            <h1>Internet Atlas</h1>
-            <button>ENTER</button>
+"use client"
+
+import { Plus } from "lucide-react"
+import { useState } from "react"
+import ForceGraph from './components/ForceGraph'
+import SlideShow from './components/SlideShow'
+import { slides, NodeId } from './data/slides'
+
+export default function InternetAtlas() {
+  const [selectedNode, setSelectedNode] = useState<NodeId | null>(null)
+
+  // Define the nodes and links
+  const nodes = [
+    { id: "purpose", name: "Our purpose", x: 0, y: 0 },
+    { id: "how", name: "How does it work?", x: 100, y: -100 },
+    { id: "involved", name: "Get Involved", x: 100, y: 0 },
+    { id: "team", name: "Our team", x: 100, y: 100 },
+    { id: "enter", name: "ENTER", x: -100, y: 0, isEnter: true }
+  ]
+
+  const links = [
+    { source: "purpose", target: "how", isDashed: true },
+    { source: "purpose", target: "involved", isDashed: true },
+    { source: "purpose", target: "team", isDashed: true },
+    { source: "enter", target: "purpose", isDashed: false }
+  ]
+
+  const handleNodeClick = (nodeId: string) => {
+    if (nodeId === "enter") return
+    setSelectedNode(prevNode => prevNode === nodeId ? null : nodeId as NodeId)
+  }
+
+  return (
+    <div className="relative w-full h-screen bg-black text-white overflow-hidden">
+      {/* Corner plus symbols */}
+      <div className="absolute top-8 left-8">
+        <Plus className="text-[#757575] w-8 h-8" />
+      </div>
+      <div className="absolute top-8 right-8">
+        <Plus className="text-[#757575] w-8 h-8" />
+      </div>
+      <div className="absolute bottom-8 left-8">
+        <Plus className="text-[#757575] w-8 h-8" />
+      </div>
+      <div className="absolute bottom-8 right-8">
+        <Plus className="text-[#757575] w-8 h-8" />
+      </div>
+
+      {/* Header */}
+      <div className="absolute top-8 left-24 flex items-center space-x-4">
+        <h1 className="text-[32px] tracking-wider handjet">INTERNET ATLAS</h1>
+        <span className="text-[#757575] handjet text-[32px]">For the cyber voyagers</span>
+      </div>
+
+      {/* Main content */}
+      <div className="flex w-full h-full">
+        {/* Left side - Force Graph */}
+        <div className="w-1/2 h-full">
+          <ForceGraph 
+            nodes={nodes} 
+            links={links} 
+            onNodeClick={handleNodeClick}
+            selectedNode={selectedNode}
+          />
         </div>
-    )
+
+        {/* Right side - Slides */}
+        <div className="w-1/2 h-full">
+          {selectedNode && slides[selectedNode] && (
+            <SlideShow 
+              slides={slides[selectedNode]} 
+              selectedNode={selectedNode}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
