@@ -11,11 +11,21 @@ import numpy as np
 from typing import Optional
 from collections import defaultdict
 
+from fastapi.middleware.cors import CORSMiddleware
+
 load_dotenv()
 
 app = FastAPI()
 pc = Pinecone(api_key=os.getenv("PINECONE_KEY"))
 index = pc.Index(host=os.getenv("PINECONE_INDEX_HOST"))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
