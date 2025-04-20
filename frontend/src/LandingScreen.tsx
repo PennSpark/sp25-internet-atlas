@@ -80,6 +80,7 @@ export default function InternetAtlas() {
             <SlideShow 
               slides={slides[selectedNode]} 
               selectedNode={selectedNode}
+              onClose={() => setSelectedNode(null)}
             />
           </div>
         )}

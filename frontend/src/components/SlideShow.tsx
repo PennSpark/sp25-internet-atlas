@@ -7,9 +7,10 @@ import { Slide } from '../data/slides'
 interface SlideShowProps {
   slides: Slide[]
   selectedNode: string | null
+  onClose?: () => void
 }
 
-export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
+export default function SlideShow({ slides, selectedNode, onClose }: SlideShowProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   // Reset slide index when selected node changes
@@ -46,7 +47,15 @@ export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
   }
 
   return (
-    <div className="h-[70%] w-[75%] bg-black p-8 flex flex-col mx-auto mt-[15%]">
+    <div className="h-[70%] w-[75%] bg-black p-8 flex flex-col mx-auto mt-[15%] relative">
+      {/* Close button */}
+      <span 
+        onClick={onClose}
+        className="absolute -top-10 right-2 handjet text-[80px] text-[#757575] hover:text-white transition-colors cursor-pointer"
+      >
+        ×
+      </span>
+
       {/* Header with figure number and title */}
       <div className="flex flex-col space-y-4 mb-8">
         <div className="flex items-center space-x-2">
