@@ -44,7 +44,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
       try {
         const res: CoordinateResponse = await getCoordinates(descriptorX, descriptorY, 'cherry');
         console.log('Graph data response:', res);
-        const scaleFactor = 0.1;
+        const scaleFactor = 2000;
 
         const nodes: NodeType[] = res.results.map((result) => ({
           id: result.id,
@@ -82,23 +82,23 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
     fgRef.current = graph;
 
     graph
-      .graphData(graphData)
-      .nodeAutoColorBy('id')
-      .nodeLabel('name')
-      .nodeThreeObjectExtend(true)
-      .linkCurvature('curvature')
-      .linkCurveRotation('rotation')
-      .linkDirectionalParticles(2)
-      .linkOpacity(0.4)
-      .linkWidth(0.1)
-      .backgroundColor('black')
-      .cameraPosition({ z: 800 });
+  .d3Force('charge', null)
+  .d3VelocityDecay(0)
+  .graphData(graphData)
+  .nodeAutoColorBy('id')
+  .nodeLabel('name')
+  .nodeThreeObjectExtend(true)
+  // .linkCurvature('curvature')
+  // .linkCurveRotation('rotation')
+  .linkOpacity(0.4)
+  .linkWidth(0.1)
+  .backgroundColor('black')
+  .cameraPosition({ z: 300 });
 
+  
     graph.controls().enableZoom = true;
-
-    graph.graphData(graphData);
-
-    
+    graph.controls().enablePan = true;
+    graph.controls().enableRotate = true;
 
     // === ADD AXES ===
 const axesLength = 200;
