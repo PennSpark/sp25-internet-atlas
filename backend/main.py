@@ -1,6 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, Form, Query
 from PIL import Image 
 import io
+
+from fastapi.responses import JSONResponse
 from img_processing import get_image_embeddings
 from text_processing import get_text_embeddings
 from pinecone import Pinecone, QueryResponse
@@ -8,10 +10,16 @@ from dotenv import load_dotenv
 import os
 import uuid
 import numpy as np
-from typing import Optional
+from typing import Optional, List
 from collections import defaultdict
+from supabase import create_client, Client
 
 load_dotenv()
+
+# Initialize Supabase client
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_ADMIN_KEY")
+SUPABASE: Client = create_client(url, key)
 
 app = FastAPI()
 pc = Pinecone(api_key=os.getenv("PINECONE_KEY"))
@@ -106,3 +114,13 @@ async def get_coordinates(axis1: str = Query(...), axis2: str = Query(...), axis
         "results_count": len(merged_results),
         "results": merged_results
     }
+
+@app.get("/get_edges")
+async def get_edges(websites: List[str] = Query(...)):
+    result = SUPABASE.table("browsing_counts").select("*").in_("origin", websites).in_("target", websites).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
