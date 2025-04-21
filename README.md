@@ -4,7 +4,7 @@ A full‑stack web app that visualizes the “shape” of the web by plotting we
 
 ---
 
-## 🚀 Project Overview
+## Project Overview
 
 - **What it does:**  
   1. User enters two adjectives.  
@@ -17,7 +17,7 @@ A full‑stack web app that visualizes the “shape” of the web by plotting we
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## Architecture & Tech Stack
 
 | Layer                     | Tech & Tools                                                                                                 |
 |---------------------------|--------------------------------------------------------------------------------------------------------------|
