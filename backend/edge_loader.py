@@ -23,7 +23,10 @@ import csv, os
 #     "origin": "TEXT",
 #     "target": "TEXT",
 #     "type": "INTEGER", # 0 if url, 1 if subdomain, 2 if domain
-#     "user": "INTEGER"
+#     "user": "INTEGER",
+#     "origin_start": "TIMESTAMP",
+#     "time_active": "INTEGER",
+#     "switch_time": "TIMESTAMP",
 # }
 
 if __name__ == "__main__":
@@ -66,17 +69,21 @@ if __name__ == "__main__":
         panelists[user] = sorted(panelists[user], key=lambda x: x[-2])
 
         l_domain = panelists[user][0][0]
-        for i, (domain, _, _) in enumerate(panelists[user][1:]):
+        l_timestamp = panelists[user][0][1]
+        l_active_seconds = panelists[user][0][2]
+        for i, (domain, timestamp, active_seconds) in enumerate(panelists[user][1:]):
             if l_domain == domain:
                 continue
 
-            csv_rows.append((l_domain, domain, user, i))
+            csv_rows.append((l_domain, domain, user, i, l_timestamp, l_active_seconds, timestamp))
 
             l_domain = domain
+            l_timestamp = timestamp
+            l_active_seconds = active_seconds
 
-    with open('./backend/browsing_processed.csv', 'w') as file:
+    with open('./backend/browsing_processed_2.csv', 'w') as file:
         writer = csv.writer(file)
-        writer.writerow(["id", "origin", "target", "user", "order"])
+        writer.writerow(["id", "origin", "target", "user", "order", "origin_start", "time_active", "switch_time"])
         writer.writerows([(i, *row) for i, row in enumerate(csv_rows, start=1)])
 
     with open('./backend/domain_set.txt', 'w') as file:
