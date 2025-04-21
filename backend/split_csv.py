@@ -2,9 +2,9 @@
 
 import csv
 
-division = 10
+division = 20
 
-with open('./backend/browsing_processed.csv', 'r') as file:
+with open('./backend/browsing_processed_2.csv', 'r') as file:
     reader = csv.reader(file)
     next(reader)  # Skip the header row
     rows = list(reader)
@@ -18,7 +18,7 @@ with open('./backend/browsing_processed.csv', 'r') as file:
             rows_to_write = rows[i * half:(i + 1) * half]
 
         # Write the current part to a new CSV file
-        with open(f'./backend/browsing_processed_{i + 1}.csv', 'w', newline='') as file:
+        with open(f'./backend/download/browsing_processed_{i + 1}.csv', 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["origin", "target", "user", "order"])
+            writer.writerow(["id", "origin", "target", "user", "order", "origin_start", "time_active", "switch_time"])
             writer.writerows(rows_to_write)
