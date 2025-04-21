@@ -4,14 +4,14 @@ import CircleSelector from "./CircleSelector"
 import Graph3D from './Graph3D'
 
 export default function NodeGraph() {
-    const [descriptorX, setDescriptorX] = useState<string | null>("ash")
-    const [descriptorY, setDescriptorY] = useState<string | null>("warm")
+    const [descriptorX, setDescriptorX] = useState<string | null>("piece")
+    const [descriptorY, setDescriptorY] = useState<string | null>("piece")
     const navigate = useNavigate()
 
     const handleLogoClick = () => {
         navigate('/')
     }
-    
+
     return (
         <div className="relative w-full h-screen bg-black text-white">
             {/* Logo */}
@@ -25,25 +25,25 @@ export default function NodeGraph() {
             </div>
 
             {/* Top Dial */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-[150px] z-[20]">
+            <div className="absolute left-1/2 -translate-x-1/2 -top-[380px] z-[20]">
                 <div className="rotate-180">
-                    <CircleSelector onSelect={(value) => setDescriptorX(value)} />
+                    <CircleSelector isLateral={false} onSelect={(value) => setDescriptorX(value)} />
                 </div>
             </div>
 
             {/* Right Dial */}
-            <div className="absolute -right-[150px] top-1/2 -translate-y-1/2 z-[20]">
+            <div className="absolute -right-[380px] top-1/2 -translate-y-1/2 z-[20]">
                 <div className="rotate-270">
-                    <CircleSelector onSelect={(value) => setDescriptorY(value)} />
+                    <CircleSelector isLateral={true} onSelect={(value) => setDescriptorY(value)} />
                 </div>
             </div>
 
             {/* Caption */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-[20]">
-                <p className="text-[#757575] text-[32px] handjet">
+                <p className="text-[#757575] text-[24px] handjet">
                     Currently showing user paths through  
-                    <span className="text-[#0b9b79]">
-                           [ {descriptorX || 'piece'} and {descriptorY || 'piece'} ]
+                    <span className="text-[#0b9b79] px-2">
+                           [{descriptorX || 'piece'} and {descriptorY || 'piece'}]
                     </span>
                     -like websites
                 </p>

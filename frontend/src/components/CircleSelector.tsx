@@ -3,10 +3,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface CircleSelectorProps {
     onSelect?: (value: string) => void
+    isLateral: boolean
 }
 
-export default function CircleSelector({ onSelect }: CircleSelectorProps) {
-    const radius = 150;
+export default function CircleSelector({ onSelect, isLateral }: CircleSelectorProps) {
+    const radius = 250;
     const categories = ['piece', 'heavy', 'organic', 'ash', 'light', 'soft', 'silk', 'smooth', 'sharp', 'fuzzy'];
     const increment = 360 / categories.length;
     const [angle, setAngle] = useState(0);
@@ -97,12 +98,13 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
 
     return (
         <div
-            className="relative z-[30] circle-selector instrument-serif flex justify-center items-center cursor-pointer w-[300px] h-[300px] rounded-full border border-black m-auto"
+            className="relative z-[30] circle-selector instrument-serif flex justify-center items-center cursor-pointer w-[450px] h-[450px] rounded-full m-auto"
+            // style={{ border: `0.5px solid white` }}
             onMouseDown={handleMouseDown}
         >
             {/* Inner white circle */}
             <div 
-                className="absolute w-[250px] h-[250px] rounded-full bg-white"
+                className="absolute w-[400px] h-[400px] rounded-[100%] bg-white"
                 style={{
                     transform: 'translate(-50%, -50%)',
                     left: '50%',
@@ -124,21 +126,32 @@ export default function CircleSelector({ onSelect }: CircleSelectorProps) {
                         className="absolute text-center text-lg cursor-pointer select-none"
                         style={{
                             transformOrigin: 'center center',
-                            color: index === selectedCategory ? '#ffffff' : '#757575',
-                            opacity: index === selectedCategory ? 1 : 0.7,
                             transition: 'color 0.3s, opacity 0.3s'
                         }}
                         onClick={() => handleWordClick(index)}
                     >
-                        <p className="rotate-180">{item}</p>
+                        <p className={isLateral ? 'rotate-90' : 'rotate-180'}
+                        style={{                            
+                            color: index === selectedCategory ? '#ffffff' : '#757575',
+                            opacity: index === selectedCategory ? 1 : 0.7,}}>
+                                {item} <span className='text-xs ml-2 text-white opacity-100'>{index + 1}</span></p>
                     </div>
                 ))}
             </div>
 
             <div
-                className="absolute -top-10 w-[15px] h-[12px] rotate-180"
+                className="absolute -top-18 w-[15px] h-[12px] rotate-180"
                 style={{
                     backgroundImage: 'url(/wheel-arrow.svg)',
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',  
+                }}
+            />
+            <div
+                className="absolute top-[40px] w-[12px] h-[12px] rotate-180"
+                style={{
+                    backgroundImage: 'url(/cross.svg)',
                     backgroundSize: 'contain',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',  

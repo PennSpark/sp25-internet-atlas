@@ -3,5 +3,9 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "moduleResolution": "node",
+  "module": "esnext",
+  "esModuleInterop": true,
+  "allowSyntheticDefaultImports": true,
 }
