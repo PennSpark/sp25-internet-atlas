@@ -124,3 +124,13 @@ async def get_edges(websites: List[str] = Query(...)):
             "results": result.data
         }
     )
+
+@app.get("/target_edge")
+async def get_target_edge(website1: str = Query(...), website2: str = Query(...)):
+    result = SUPABASE.table("browsing_complete").select("*").eq("origin", website1).eq("target", website2).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
