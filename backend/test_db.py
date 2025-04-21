@@ -10,4 +10,7 @@ key: str = os.environ.get("SUPABASE_ADMIN_KEY")
 SUPABASE: Client = create_client(url, key)
 
 result = SUPABASE.table("browsing_counts").select("*").limit(10).order('visit_count', desc=True).execute()
-print(result.data[:10])
+print(result.data)
+
+result = SUPABASE.table("browsing_complete").select("*").limit(10).execute()
+print(result.data)
