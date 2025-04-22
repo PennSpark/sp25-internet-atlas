@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import { getCoordinates, CoordinateResponse, getEdges } from '../api/api';
 import { NodeType, LinkType } from '../types';
-import { setupGraphControls, createTextTexture, findConnectedPath, addSceneDecorations, configureScene} from './graphHelpers';
+import { findConnectedPath, configureScene} from './graphHelpers';
 
 interface GraphData {
   nodes: NodeType[];
@@ -36,10 +36,9 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
 
 
   useEffect(() => {
-    const graph = ForceGraph3D()(containerRef.current);
+    const graph = new ForceGraph3D(containerRef.current!) as ForceGraph3DInstance;
     fgRef.current = graph;
   
-    // Modular scene + control setup
     configureScene(graph);
   
     const handleResize = () => {
@@ -63,7 +62,6 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
   
     const graph = fgRef.current;
     const camera = graph.camera();
-    const controls = graph.controls();
   
     let animationFrameId: number;
   
@@ -86,9 +84,13 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
       camera.lookAt(new THREE.Vector3(node.x!, node.y!, node.z!));
       camera.updateMatrixWorld();
   
-      // If you want controls to sync (e.g., OrbitControls)
-      if (controls) controls.target.set(node.x!, node.y!, node.z!);
-  
+      const controls = fgRef.current?.controls() as OrbitControls | undefined;
+
+      if (controls) {
+        controls.target.set(node.x!, node.y!, node.z!);
+        controls.update();
+      }
+        
       // Update overlay position
       const projected = new THREE.Vector3(node.x!, node.y!, node.z!).project(camera);
       const width = window.innerWidth;
@@ -108,14 +110,15 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
   }, [selectedNode]);
 
   useEffect(() => {
-    if (fgRef.current) {
-      const controls = fgRef.current.controls() as OrbitControls;
-      
-      if (controls) {
-        controls.enabled = !frozen;
-      }
+    const controls = fgRef.current?.controls() as OrbitControls | undefined;
+    if (controls) {
+      const shouldEnable = !frozen;
+      controls.enableRotate = shouldEnable;
+      controls.enableZoom = shouldEnable;
+      controls.enablePan = shouldEnable;
     }
-  }, [frozen]);
+  }, [frozen]);  
+  
   
   useEffect(() => {
     console.log('Initializing 3D graph...');
@@ -182,12 +185,14 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
     fgRef.current
       .linkColor((link) => highlightLinks.has(link as LinkType) ? 'white' : 'gray')
       .linkWidth((link) => highlightLinks.has(link as LinkType) ? 2 : 0.5)
-      .linkOpacity((link) => highlightLinks.has(link as LinkType) ? 1 : 0.4)
+      
       .nodeThreeObjectExtend(false)
-      .nodeThreeObject((node: NodeType) => {
-      const isHighlighted: boolean = highlightNodes.has(node.id);
-      return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
+      .nodeThreeObject((node) => {
+        const id = typeof node.id === 'string' ? node.id : String(node.id ?? '');
+        const isHighlighted = highlightNodes?.has(id) ?? false;
+        return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
       })
+      
 
   }, [highlightNodes, highlightLinks, selectedNode, defaultMaterial, defaultSphere, highlightedMaterial]);
   
@@ -207,77 +212,105 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
     .nodeThreeObjectExtend(true)
     // .linkCurvature('curvature')
     // .linkCurveRotation('rotation')
-    .linkColor((link: LinkType) => highlightLinks && highlightLinks.has(link) ? 'white' : 'gray')
-    .linkWidth((link: LinkType) => highlightLinks && highlightLinks.has(link) ? 2 : 0.5)
+    .linkColor((link) => {
+      return highlightLinks?.has(link as LinkType) ? 'white' : 'gray';
+    })
+    .linkWidth((link) => {
+      return highlightLinks?.has(link as LinkType) ? 2 : 0.5;
+    })
     .nodeThreeObjectExtend(false)
-    .nodeThreeObject((node: NodeType): THREE.Mesh => {
-      const isHighlighted: boolean = highlightNodes?.has(node.id) ?? false;
+    .nodeThreeObject((node) => {
+      const typedNode = node as NodeType;
+      const isHighlighted = highlightNodes?.has(typedNode.id) ?? false;
       return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
     })
-
-    .linkThreeObject((link: LinkType): THREE.Mesh | null => {
-      const isHighlighted: boolean = highlightLinks?.has(link) ?? false;
-      
-      const sourceNode: NodeType | undefined = graphData.nodes.find(n => n.id === link.source);
-      const targetNode: NodeType | undefined = graphData.nodes.find(n => n.id === link.target);
-      
-      if (!sourceNode || !targetNode) return null; // fallback safety
-      
-      const material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
-      color: isHighlighted ? 0xffffff : 0x999999,
-      transparent: false,
-      opacity: 1,
-      blending: THREE.NoBlending,
-      depthWrite: true,
+    .linkThreeObject((linkObj) => {
+      const isHighlighted = highlightLinks?.has(linkObj as LinkType) ?? false;
+    
+      const source = typeof linkObj.source === 'object' ? linkObj.source as NodeType : null;
+      const target = typeof linkObj.target === 'object' ? linkObj.target as NodeType : null;
+    
+      if (!source || !target) {
+        // return an invisible dummy object instead of null
+        const emptyObject = new THREE.Object3D();
+        emptyObject.visible = false;
+        return emptyObject;
+      }
+    
+      const material = new THREE.MeshBasicMaterial({
+        color: isHighlighted ? 0xffffff : 0x999999,
+        transparent: false,
+        opacity: 1,
+        blending: THREE.NoBlending,
+        depthWrite: true,
       });
-      
+    
       const curve = new THREE.QuadraticBezierCurve3(
-      new THREE.Vector3(sourceNode.x!, sourceNode.y!, sourceNode.z!),
-      new THREE.Vector3(
-        (sourceNode.x! + targetNode.x!) / 2,
-        (sourceNode.y! + targetNode.y!) / 2 + 10,
-        (sourceNode.z! + targetNode.z!) / 2
-      ),
-      new THREE.Vector3(targetNode.x!, targetNode.y!, targetNode.z!)
+        new THREE.Vector3(source.x!, source.y!, source.z!),
+        new THREE.Vector3(
+          (source.x! + target.x!) / 2,
+          (source.y! + target.y!) / 2 + 10,
+          (source.z! + target.z!) / 2
+        ),
+        new THREE.Vector3(target.x!, target.y!, target.z!)
       );
     
       const points = curve.getPoints(20);
       const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 64, 0.5, 8, false);
     
       return new THREE.Mesh(geometry, material);
-    })  
-    .onLinkClick((link: LinkType): void => {
-      findConnectedPath(
-      link,
-      graphData,
-      setHighlightNodes,
-      setHighlightLinks,
-      fgRef.current!,
-      setFrozen
-      );
-    })  
-    .onNodeClick((node: NodeType): void => {
-      const distance = 40;
-      const newPos = {
-      x: node.x! + distance,
-      y: node.y! + distance,
-      z: node.z! + distance,
-      };
-
-      graph.cameraPosition(
-      newPos,
-      node as any,
-      1000 //transition duration
-      );
-    
-      if (typeof node.id === 'string') {
-      setSelectedNode(node as NodeType);
-      } else {
-      console.warn('Node id is not a string:', node);
-      }
     })
     
-    .linkOpacity((link: LinkType): number => highlightLinks.has(link) ? 1 : 0.4)
+    .onLinkClick((linkObj) => {
+      const sourceNode = typeof linkObj.source === 'object' ? linkObj.source as NodeType : undefined;
+      const targetNode = typeof linkObj.target === 'object' ? linkObj.target as NodeType : undefined;
+    
+      if (!sourceNode || !targetNode) {
+        console.warn('Link source/target is not an object:', linkObj);
+        return;
+      }
+    
+      const safeLink: LinkType = {
+        source: sourceNode,
+        target: targetNode,
+        curvature: (linkObj as { curvature?: number }).curvature ?? 0,
+        rotation: (linkObj as { rotation?: number }).rotation ?? 0,
+      };
+    
+      findConnectedPath(
+        safeLink,
+        graphData,
+        setHighlightNodes,
+        setHighlightLinks,
+        fgRef.current!,
+        setFrozen
+      );
+    })
+    
+     
+    .onNodeClick((node) => {
+      if (typeof node.id !== 'string') {
+        console.warn('Invalid node id:', node);
+        return;
+      }
+    
+      const distance = 40;
+      const newPos = {
+        x: node.x! + distance,
+        y: node.y! + distance,
+        z: node.z! + distance,
+      };
+    
+      if (node.x !== undefined && node.y !== undefined && node.z !== undefined) {
+        const lookAt = { x: node.x, y: node.y, z: node.z };
+        fgRef.current?.cameraPosition(newPos, lookAt, 1000);
+      } else {
+        console.warn('Node coordinates are undefined:', node);
+      }
+      
+      setSelectedNode(node as NodeType); // Safe cast after guard
+    })
+    
     .linkWidth(0.1)
     .backgroundColor('black')
     .cameraPosition({ z: 500 });

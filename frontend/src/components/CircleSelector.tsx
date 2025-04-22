@@ -21,7 +21,7 @@ export default function CircleSelector({ onSelect, isLateral }: CircleSelectorPr
     // Position the words around the circle
     useEffect(() => {
         if (circleRef.current) {
-            categories.forEach((item, index) => {
+            categories.forEach((_, index) => {
                 const angle = index * increment;
                 const wordElement = circleRef.current!.children[index] as HTMLDivElement;
                 wordElement.style.transform = `rotate(${angle}deg) translateY(-${radius}px)`;
