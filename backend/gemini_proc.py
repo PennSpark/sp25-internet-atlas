@@ -1,37 +1,24 @@
 from typing import List, Dict
 from fastapi import UploadFile
-from google.cloud import aiplatform
+import google.generativeai as genai
+from google.generativeai.types import ContentType
+from PIL.Image import Image
 import base64
+import os
 
-aiplatform.init(location="us-central1")
-model = aiplatform.GenerativeModel(model_name="gemini-pro-1.5-vision")
 
-async def img_and_txt_to_description(web_text: str, image_parts: List[Dict[str, bytes]]) -> str:
+
+genai.configure(api_key=os.getenv("GEMINI_KEY"))
+model = genai.GenerativeModel('gemini-1.5-pro-latest')
+
+async def img_and_txt_to_description(web_text: str, images: List[Image] ) -> str:
     """
     Analyzes a list of image byte dictionaries and website text using Gemini Pro 1.5.
     Each image part must contain 'data' (bytes) and 'mime_type' (e.g., 'image/png').
     """
-    contents = []
+    prompt = "Give a description of the website provided images and text."
 
-    for image in image_parts:
-        try:
-            contents.append(
-                aiplatform.generative_models.Part.from_image(
-                    data=image["data"],
-                    mime_type=image["mime_type"]
-                )
-            )
-        except Exception as e:
-            print(f"Error processing image part: {e}")
-            continue
-
-    contents.append(
-        aiplatform.generative_models.Part.from_text(
-            f"Analyze these images and the following website text:\n\n{web_text}\n\n"
-            "Provide a comprehensive summary and insights based on the visuals and HTML content."
-        )
-    )
-
+    contents = [web_text, *images, prompt]
     try:
         response = await model.generate_content(contents=contents, stream=False)
         return response.text

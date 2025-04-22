@@ -1,38 +1,15 @@
 import asyncio
-import base64
-import requests
-from playwright.async_api import Browser
-from crawl4ai.extraction_strategy import CosineStrategy
-from playwright.async_api import Page
-import os
-from urllib.parse import urlparse
+from PIL import Image
+from io import BytesIO
+from playwright.async_api import Browser, async_playwright
 
 
-async def crawl_and_extract(url, browser):
-    context = await browser.new_context()
-    page = await context.new_page()
-
-    try:
-        await page.goto(url, timeout=30000)
-        text = await page.content()
-        screenshot = await page.screenshot()
-    except Exception as e:
-        print(f"[crawl error] {url} | {e}")
-        text, screenshot = "", None
-    finally:
-        await page.close()
-        await context.close()
-
-    return text, screenshot
-
-
-
-
-async def crawl_and_return(url: str, browser: Browser):
+async def crawl_and_return(url: str):
     """
-    Crawls a page and returns its content and a screenshot in a format
-    that Gemini AI can analyze directly.
+    Crawls a page and returns its content and a screenshot
+    as a list of PIL images.
     """
+    browser = async_playwright.chromium.launch(headless=True)
     context = await browser.new_context()
     page = await context.new_page()
 
@@ -40,9 +17,10 @@ async def crawl_and_return(url: str, browser: Browser):
         await page.goto(url, timeout=30000)
         text = await page.content()
         screenshot_bytes = await page.screenshot()
+        screenshot_pil = Image.open(BytesIO(screenshot_bytes)) if screenshot_bytes else None
     except Exception as e:
         print(f"[crawl error] {url} | {e}")
-        text, screenshot_bytes = "", None
+        text, screenshot_pil = "", None
     finally:
         await page.close()
         await context.close()
@@ -50,10 +28,5 @@ async def crawl_and_return(url: str, browser: Browser):
     return {
         "url": url,
         "text": text,
-        "images": [
-            {
-                "data": screenshot_bytes,
-                "mime_type": "image/png"
-            }
-        ] if screenshot_bytes else []
+        "images": [screenshot_pil] if screenshot_pil else []
     }
