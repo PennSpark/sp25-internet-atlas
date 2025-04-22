@@ -44,18 +44,16 @@ async def embed_website_api(
     crawl_data = await crawl_and_return(url) 
     description = await img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
     
-    # index.upsert(
-    #     vectors=[{
-    #         "id": url,
-    #         "values": final_embedding.tolist(),
-    #     }],
-    #     namespace=""
-    # )
+    index.upsert(
+        vectors=[{
+            "id": url,
+            "values": description["embedding"]
+        }],
+        namespace=""
+    )
     return {
         "status": "success",
-        "description": description,
-        "webtext":crawl_data["text"],
-        # "embedding": final_embedding.tolist(),
+        "description": description["text"],
         "url": url
     }
 
