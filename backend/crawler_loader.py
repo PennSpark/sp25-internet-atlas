@@ -14,11 +14,20 @@ index = pc.Index(host=os.getenv("PINECONE_INDEX_HOST"))
 
 async def main():
 
-    website_url = 'https://crawl4ai.com'
-    # Create an instance of AsyncWebCrawler
-    async with AsyncWebCrawler() as crawler:
-        # Run the crawler on a URL
-        result = await crawler.arun(url=website_url)
+    # website_url = 'https://crawl4ai.com'
+
+    website_url_csv = './backend/domain_set.txt'
+
+    with open(website_url_csv, 'r') as file:
+        website_urls = file.readlines()
+
+    for website_url in website_urls:
+        website_url = website_url.strip()  # Remove any extra whitespace
+
+        # Create an instance of AsyncWebCrawler
+        async with AsyncWebCrawler() as crawler:
+            # Run the crawler on a URL
+            result = await crawler.arun(url=website_url)
 
         # Print the extracted content
         text = result.html
