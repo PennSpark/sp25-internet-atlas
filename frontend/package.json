@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "pennspark.github.io/sp25-internet-atlas",
+  "homepage": "pennspark.github.io/sp25-internet-atlas/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
