@@ -9,7 +9,7 @@ import os
 
 
 genai.configure(api_key=os.getenv("GEMINI_KEY"))
-model = genai.GenerativeModel('gemini-1.5-pro-latest')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 async def img_and_txt_to_description(web_text: str, images: List[Image] ) -> str:
     """
@@ -20,7 +20,7 @@ async def img_and_txt_to_description(web_text: str, images: List[Image] ) -> str
 
     contents = [web_text, *images, prompt]
     try:
-        response = await model.generate_content(contents=contents, stream=False)
+        response = model.generate_content(contents=contents, stream=False)
         return response.text
     except Exception as e:
         return f"Error generating content: {e}"

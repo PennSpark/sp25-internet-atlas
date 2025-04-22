@@ -41,9 +41,8 @@ async def embed_website_api(
 
     # final_embedding = np.mean([img_embed, text_embed], axis=0)  # Average the embeddings
     ##consider final_embedding = 0.7 * np.array(img_embed) + 0.3 * np.array(text_embed) for better weighting??
-    crawl_data = crawl_and_return(url) 
-    description = img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
-    print(description)
+    crawl_data = await crawl_and_return(url) 
+    description = await img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
     
     # index.upsert(
     #     vectors=[{
@@ -54,6 +53,8 @@ async def embed_website_api(
     # )
     return {
         "status": "success",
+        "description": description,
+        "webtext":crawl_data["text"],
         # "embedding": final_embedding.tolist(),
         "url": url
     }
