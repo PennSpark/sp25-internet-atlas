@@ -1,8 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, Form
 from PIL import Image 
+from fastapi import FastAPI, Form
 import io
+from crawl_and_embed import crawl_and_return 
 from img_processing import get_image_embeddings
 from text_processing import get_text_embeddings
+from gemini_proc import img_and_txt_to_description
 from pinecone import Pinecone 
 from dotenv import load_dotenv
 import os
@@ -24,11 +26,7 @@ async def root():
     return {"message": "Hello World"}
 
     
-from fastapi import FastAPI, File, UploadFile
-from PIL import Image
-import io
-import numpy as np
-from img_processing import generate_description, make_clip_embedding
+
 
 app = FastAPI()
 
@@ -36,26 +34,27 @@ app = FastAPI()
 
 @app.post("/embed-website")
 async def embed_website_api(
-    files: list[UploadFile] = File(...),
-    text: str = Form(...),
     url: str = Form(...)
 ):
-    img_embed = await get_image_embeddings(files)
-    text_embed = get_text_embeddings(text)
+    # img_embed = await get_image_embeddings(files)
+    # text_embed = get_text_embeddings(text)
 
-    final_embedding = np.mean([img_embed, text_embed], axis=0)  # Average the embeddings
+    # final_embedding = np.mean([img_embed, text_embed], axis=0)  # Average the embeddings
     ##consider final_embedding = 0.7 * np.array(img_embed) + 0.3 * np.array(text_embed) for better weighting??
+    crawl_data = crawl_and_return(url) 
+    description = img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
+    print(description)
     
-    index.upsert(
-        vectors=[{
-            "id": url,
-            "values": final_embedding.tolist(),
-        }],
-        namespace=""
-    )
+    # index.upsert(
+    #     vectors=[{
+    #         "id": url,
+    #         "values": final_embedding.tolist(),
+    #     }],
+    #     namespace=""
+    # )
     return {
         "status": "success",
-        "embedding": final_embedding.tolist(),
+        # "embedding": final_embedding.tolist(),
         "url": url
     }
 
@@ -63,7 +62,7 @@ async def embed_website_api(
 @app.post("/search_vectors")
 async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)):
     # Get text embeddings for the search query
-    text_search_embedding = get_text_embeddings(query)
+    # text_search_embedding = get_text_embeddings(query)
     
     # Query Pinecone index for the k closest vectors
     search_results = index.query(
