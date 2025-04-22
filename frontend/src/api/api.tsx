@@ -33,6 +33,18 @@ export interface CoordinateResponse {
   results: CoordinateResult[];
 }
 
+export interface EdgeData {
+  origin: string;
+  target: string;
+  [key: string]: any; // in case there are extra columns like count, timestamp, etc.
+}
+
+export interface EdgesResponse {
+  results_count: number;
+  results: EdgeData[];
+}
+
+
 // POST /embed-website
 export async function embedWebsite(
   files: File[],
@@ -99,5 +111,31 @@ console.log("Fetching coordinates...");
     console.warn('⚠️ No results returned from coordinates API.');
   }
 
+  return response.data;
+}
+
+// GET /get_edges
+export async function getEdges(websites: string[]): Promise<EdgesResponse> {
+  const params = new URLSearchParams();
+  websites.forEach((site) => {
+    const cleanSite = site;
+    params.append("websites", cleanSite);
+  });
+  console.log("Fetching edges for websites:", websites);
+
+  const response = await axios.get(`${API_BASE}/get_edges`, { params });
+  return response.data;
+}
+
+// GET /target_edge
+export async function getTargetEdge(
+  website1: string,
+  website2: string
+): Promise<EdgesResponse> {
+  const params = new URLSearchParams();
+  params.append("website1", website1);
+  params.append("website2", website2);
+
+  const response = await axios.get(`${API_BASE}/target_edge`, { params });
   return response.data;
 }
