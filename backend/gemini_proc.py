@@ -11,6 +11,13 @@ import os
 genai.configure(api_key=os.getenv("GEMINI_KEY"))
 model_flash = genai.GenerativeModel('gemini-2.0-flash')
 
+async def generate_embedding(text : str):
+        return genai.embed_content(
+            model="gemini-embedding-exp-03-07",
+            content=text,
+            task_type="retrieval_document"
+        )
+
 
 async def img_and_txt_to_description(web_text: str, images: List[Image] ) -> str:
     """
@@ -26,11 +33,7 @@ async def img_and_txt_to_description(web_text: str, images: List[Image] ) -> str
     contents = [web_text, *images, prompt]
     try:
         response = model_flash.generate_content(contents=contents, stream=False)
-        embedding = genai.embed_content(
-            model="gemini-embedding-exp-03-07",
-            content=response.text,
-            task_type="retrieval_document"
-        )
+        embedding = await generate_embedding(response.text)
         return {"error": None, "embedding": embedding, "text": response.text}
     except Exception as e:
         return {"error": e, "embedding": None, "text": None}
