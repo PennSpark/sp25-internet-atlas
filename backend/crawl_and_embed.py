@@ -15,7 +15,7 @@ async def crawl_and_return(url: str):
         page = await context.new_page()
 
         try:
-            await page.goto(url, timeout=30000)
+            await page.goto(url, timeout=60000)
             text = await page.content()
             screenshot_bytes = await page.screenshot()
             screenshot_pil = Image.open(BytesIO(screenshot_bytes)) if screenshot_bytes else None

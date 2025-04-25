@@ -136,6 +136,7 @@ async def process_website(url: str, job_id: str):
             }],
             namespace=""
         )
+        print(f"completed {url}")
         
         return {
             "status": "completed",
@@ -146,10 +147,12 @@ async def process_website(url: str, job_id: str):
         if "rate limit" in str(e).lower() or "quota" in str(e).lower():
             # Requeue the job
             job_queue.put((job_id, url))
+            print(f"requeued {url}")
             return {
                 "status": "requeued",
                 "message": f"Hit rate limit, job requeued"
             }
+        print(f"Error: {str(e)}")
         return {
             "status": "error",
             "message": f"Error: {str(e)}"
@@ -161,11 +164,11 @@ async def root():
 
 @app.post("/embed-website")
 async def embed_website_api(url: str = Form(...)):
-    print("hello")
     print("=" * 80)
     fetch_response = index.fetch(ids=[url])
+    print(fetch_response)
         
-    if fetch_response:
+    if fetch_response.vectors:
         return {
         "status": "website exists",
         "url": url
