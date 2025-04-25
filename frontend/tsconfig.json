@@ -8,5 +8,8 @@
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "types": ["vite/client"],
-  }
+  },
+  "module": "esnext",
+  "esModuleInterop": true,
+  "allowSyntheticDefaultImports": true,
 }
