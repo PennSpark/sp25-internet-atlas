@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CircleSelector from "./CircleSelector"
 import Graph3D from './Graph3D'

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef} from 'react'
 import * as d3 from 'd3'
 
 interface Node extends d3.SimulationNodeDatum {

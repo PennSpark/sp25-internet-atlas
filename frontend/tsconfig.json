@@ -4,7 +4,9 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
-  "moduleResolution": "node",
+  "compilerOptions": {
+    "moduleResolution": "node"
+  },
   "module": "esnext",
   "esModuleInterop": true,
   "allowSyntheticDefaultImports": true,
