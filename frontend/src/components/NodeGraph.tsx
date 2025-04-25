@@ -5,7 +5,7 @@ import Graph3D from './Graph3D'
 
 export default function NodeGraph() {
     const [descriptorX, setDescriptorX] = useState<string | null>("piece")
-    const [descriptorY, setDescriptorY] = useState<string | null>("piece")
+    const [descriptorY, setDescriptorY] = useState<string | null>("fuzzy")
     const navigate = useNavigate()
 
     const handleLogoClick = () => {
@@ -16,7 +16,7 @@ export default function NodeGraph() {
         <div className="relative w-full h-screen bg-black text-white">
             {/* Logo */}
             <div 
-                className="absolute z-[20] top-8 left-8 cursor-pointer hover:opacity-80 transition-opacity"
+                className="absolute z-[20] top-8 left-8 cursor-pointer hover:opacity-80 transition-opacity select-none"
                 onClick={handleLogoClick}
             >
                 <div className="w-12 h-12">
@@ -25,14 +25,14 @@ export default function NodeGraph() {
             </div>
 
             {/* Top Dial */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-[380px] z-[20]">
+            <div className="absolute left-1/2 -translate-x-1/2 -top-[400px] z-[20]">
                 <div className="rotate-180">
                     <CircleSelector isLateral={false} onSelect={(value) => setDescriptorX(value)} />
                 </div>
             </div>
 
             {/* Right Dial */}
-            <div className="absolute -right-[380px] top-1/2 -translate-y-1/2 z-[20]">
+            <div className="absolute -right-[400px] top-1/2 -translate-y-1/2 z-[20]">
                 <div className="rotate-270">
                     <CircleSelector isLateral={true} onSelect={(value) => setDescriptorY(value)} />
                 </div>
@@ -48,12 +48,12 @@ export default function NodeGraph() {
                     -like websites
                 </p>
             </div>
-
+{/* 
             { descriptorX && descriptorY &&
             <Graph3D
                 descriptorX={descriptorX}
                 descriptorY={descriptorY}/>
-        }       
+        }        */}
         </div>
     )
 } 

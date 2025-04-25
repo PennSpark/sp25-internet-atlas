@@ -25,9 +25,14 @@ export default function CircleSelector({ onSelect, isLateral }: CircleSelectorPr
                 const angle = index * increment;
                 const wordElement = circleRef.current!.children[index] as HTMLDivElement;
                 wordElement.style.transform = `rotate(${angle}deg) translateY(-${radius}px)`;
+                if (index - selectedCategory === 1 || (index === 0 && selectedCategory === categories.length - 1)) {
+                    wordElement.style.transform = `rotate(${angle - increment * 0.3}deg) translateY(-${radius}px)`;
+                } else if (index - selectedCategory === -1 || (index === categories.length - 1 && selectedCategory === 0)) {
+                    wordElement.style.transform = `rotate(${angle + increment * 0.3}deg) translateY(-${radius}px)`;
+                }
             });
         }
-    }, [increment, categories, radius]);
+    }, [increment, categories, radius, selectedCategory]);
 
     const getAngle = (mouseXPos: number, mouseYPos: number) => {
         const circleCenterX = window.innerWidth / 2;
@@ -149,7 +154,7 @@ export default function CircleSelector({ onSelect, isLateral }: CircleSelectorPr
                 }}
             />
             <div
-                className="absolute top-[40px] w-[12px] h-[12px] rotate-180"
+                className="absolute top-[33px] w-[12px] h-[12px] rotate-180"
                 style={{
                     backgroundImage: 'url(/cross.svg)',
                     backgroundSize: 'contain',

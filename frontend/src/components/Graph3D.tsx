@@ -139,26 +139,45 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX
         console.log('Graph data response:', res);
         const scaleFactor = 2000;
     
-        const nodes: NodeType[] = res.results.map((result) => ({
+        const rawNodes = res.results.map((result) => ({
           id: result.id.replace(/^https?:\/\//, ''),
           name: result.id.replace(/^https?:\/\//, ''),
           val: result.scores.reduce((a, b) => a + b, 0),
           x: result.scores[0] * scaleFactor,
           y: result.scores[1] * scaleFactor,
-          z: (0) * scaleFactor,
         }));
-    
-        const websiteIds = nodes.map((node) => node.id);
-
+        
+        const websiteIds = rawNodes.map((node) => node.id);
+        
         const edgeRes = await getEdges(websiteIds);
         console.log('Fetched edges:', edgeRes);
-    
+        
+        // Step 1: Compute total visit counts
+        const visitCountMap = new Map<string, number>();
+        
+        edgeRes.results.forEach(({ origin, target, visit_count }) => {
+          visitCountMap.set(origin, (visitCountMap.get(origin) ?? 0) + visit_count);
+          visitCountMap.set(target, (visitCountMap.get(target) ?? 0) + visit_count);
+        });
+        
+        // Optional: get max to normalize
+        const maxVisits = Math.max(...Array.from(visitCountMap.values()));
+        const zScale = scaleFactor/2; // adjust to tune Z range
+        
+        // Step 2: Apply Z based on normalized visit count
+        const nodes: NodeType[] = rawNodes.map((node) => ({
+          ...node,
+          z: ((visitCountMap.get(node.id) ?? 0) / maxVisits) * zScale,
+        }));
+        
+        // Step 3: Links stay the same
         const links: LinkType[] = edgeRes.results.map((entry) => ({
           source: nodes.find(node => node.id === entry.origin)!,
           target: nodes.find(node => node.id === entry.target)!,
           curvature: 0.3,
           rotation: 0.5,
         }));
+        
     
         setGraphData({ nodes, links });
     

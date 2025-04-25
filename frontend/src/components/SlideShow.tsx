@@ -7,9 +7,10 @@ import { Slide } from '../data/slides'
 interface SlideShowProps {
   slides: Slide[]
   selectedNode: string | null
+  onClose?: () => void
 }
 
-export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
+export default function SlideShow({ slides, selectedNode, onClose }: SlideShowProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   // Reset slide index when selected node changes
@@ -17,7 +18,10 @@ export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
     setCurrentSlide(0)
   }, [selectedNode])
 
-  if (!selectedNode) return null
+  if (!selectedNode || !slides || slides.length === 0) return null
+
+  const currentSlideData = slides[currentSlide]
+  if (!currentSlideData) return null
 
   const handlePrevSlide = () => {
     if (currentSlide > 0) {
@@ -31,8 +35,27 @@ export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
     }
   }
 
+  const getFigureNumber = () => {
+    // Count how many slides with figures come before the current slide
+    let figureCount = 0;
+    for (let i = 0; i <= currentSlide; i++) {
+      if (slides[i].figure) {
+        figureCount++;
+      }
+    }
+    return figureCount;
+  }
+
   return (
-    <div className="h-[70%] w-[75%] bg-black p-8 flex flex-col mx-auto mt-[15%]">
+    <div className="h-[70%] w-[75%] bg-black p-8 flex flex-col mx-auto mt-[15%] relative">
+      {/* Close button */}
+      <span 
+        onClick={onClose}
+        className="absolute -top-10 right-2 handjet text-[80px] text-[#757575] hover:text-white transition-colors cursor-pointer"
+      >
+        ×
+      </span>
+
       {/* Header with figure number and title */}
       <div className="flex flex-col space-y-4 mb-8">
         <div className="flex items-center space-x-2">
@@ -41,18 +64,18 @@ export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
           </div>
         </div>
         <div className="bg-white w-full py-[1px] px-4">
-          <h2 className="text-black handjet text-[26px]">{slides[currentSlide].title}</h2>
+          <h2 className="text-black handjet text-[26px]">{currentSlideData.title}</h2>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-grow overflow-auto">
-        <p className="text-white text-[20px] mb-8">{slides[currentSlide].content}</p>
-        {slides[currentSlide].figure && (
+        <p className="text-white text-[20px] mb-8">{currentSlideData.content}</p>
+        {currentSlideData.figure && (
           <div className="mt-8">
             <img 
-              src={slides[currentSlide].figure} 
-              alt={`Figure for ${slides[currentSlide].title}`}
+              src={currentSlideData.figure} 
+              alt={`Figure for ${currentSlideData.title}`}
               className="max-w-full"
             />
           </div>
@@ -73,11 +96,12 @@ export default function SlideShow({ slides, selectedNode }: SlideShowProps) {
           <span className={`handjet text-[24px] ${currentSlide > 0 ? 'text-[#757575] hover:text-white transition-colors' : 'text-[#757575]'}`}>
             Back
           </span>
-          
         </div>
-        <div className="text-[#757575] text-[24px] handjet">
-          Fig {String(currentSlide + 1).padStart(2, '0')}
-        </div>
+        {currentSlideData.figure && (
+          <div className="text-[#757575] text-[24px] handjet">
+            Fig {String(getFigureNumber()).padStart(2, '0')}
+          </div>
+        )}
         <div 
           onClick={currentSlide < slides.length - 1 ? handleNextSlide : undefined}
           className={`flex items-center space-x-2 ${
