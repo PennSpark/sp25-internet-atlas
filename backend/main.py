@@ -206,10 +206,12 @@ async def get_job_status(job_id: str):
 async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)):
     # Wait for rate limiter before making Gemini API call for embedding
     await gemini_rate_limiter.wait_if_needed()
+
+    query_vector = await generate_embedding(query)
     
     # Query Pinecone index
     search_results = index.query(
-        vector=generate_embedding(query),
+        vector=query_vector,
         top_k=k_returns,
         include_values=False,
         include_metadata=True
