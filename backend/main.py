@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 import queue
 import threading
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +31,12 @@ job_queue = queue.Queue()
 
 # Job status tracking
 job_status = {}
+
+browser_config = BrowserConfig(
+    verbose=True
+)
+
+crawler = AsyncWebCrawler(config=browser_config)
 
 # Rate limiting configuration
 class RateLimiter:
@@ -103,51 +110,51 @@ async def process_website(url: str, job_id: str):
 
         # Crawl website
         print(f"[Process] Crawling {url}...")
-        crawl_data = await crawl_and_return(url)
+        crawl_data = await crawl_and_return(url, crawler)
         print(f"[Process] Crawl success. Got text length={len(crawl_data['text'])}, images={len(crawl_data['images'])}")
         
         # Wait for rate limiter before making Gemini API call
         await gemini_rate_limiter.wait_if_needed()
         
         # Generate description and embedding
-        print(f"[Process] Generating description and embedding for {url}...")
-        description = await img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
+        # print(f"[Process] Generating description and embedding for {url}...")
+        # description = await img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
         
         # Check if embedding was generated successfully
-        if description["error"] is not None or description["embedding"] is None:
-            print(f"[Process] Embedding generation failed: {description['error']}")
-            return {
-                "status": "error",
-                "message": f"Failed to generate embedding: {description['error']}"
-            }
+        # if description["error"] is not None or description["embedding"] is None:
+        #     print(f"[Process] Embedding generation failed: {description['error']}")
+        #     return {
+        #         "status": "error",
+        #         "message": f"Failed to generate embedding: {description['error']}"
+        #     }
         
         # Access the embedding
-        embedding_vector = description["embedding"]["embedding"]
-        print(f"[Process] Embedding vector length: {len(embedding_vector)}")
+        # embedding_vector = description["embedding"]["embedding"]
+        # print(f"[Process] Embedding vector length: {len(embedding_vector)}")
         
         # Check dimensions
-        vector_dim = len(embedding_vector)
-        if vector_dim != 3072:
-            print(f"[Process] Dimension mismatch: {vector_dim}")
-            return {
-                "status": "error",
-                "message": f"Vector dimension mismatch: {vector_dim} (needs to be 3072)"
-            }
+        # vector_dim = len(embedding_vector)
+        # if vector_dim != 3072:
+        #     print(f"[Process] Dimension mismatch: {vector_dim}")
+        #     return {
+        #         "status": "error",
+        #         "message": f"Vector dimension mismatch: {vector_dim} (needs to be 3072)"
+        #     }
         
         # If dimensions match, proceed with upsert
         print(f"[Process] Upserting {url} into Pinecone...")
-        index.upsert(
-            vectors=[{
-                "id": url,
-                "values": embedding_vector
-            }],
-            namespace=""
-        )
+        # index.upsert(
+        #     vectors=[{
+        #         "id": url,
+        #         "values": embedding_vector
+        #     }],
+        #     namespace=""
+        # )
         print(f"[Process] Upsert complete for {url}.")
         
         return {
             "status": "completed",
-            "description": description["text"]
+            "description": None # description["text"]
         }
     except Exception as e:
         # If we get a rate limit error, requeue the job

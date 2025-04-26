@@ -3,6 +3,8 @@ from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig
 from PIL import Image
 import io
 
+
+
 run_config = CrawlerRunConfig(
     word_count_threshold=10,        
     exclude_external_links=True,    
@@ -11,7 +13,7 @@ run_config = CrawlerRunConfig(
     screenshot=True
 ) 
 
-async def crawl_and_return(url: str):
+async def crawl_and_return(url: str, crawler):
     """
     Crawls a page and returns its content and a screenshot
     as a list of PIL images using crawl4ai.
@@ -19,12 +21,12 @@ async def crawl_and_return(url: str):
     # Initialize the AsyncWebCrawler
     
     try:
-        browser_config = BrowserConfig()  # Default browser configuration
         # Crawl the URL
-        async with AsyncWebCrawler(config=browser_config) as crawler:
-            result = await crawler.arun(url, config=run_config)
+        await crawler.start()
+        result = await crawler.arun(url, config=run_config)
         html_content = result.html
         screenshot = result.screenshot
+        print(html_content)
         if not screenshot:
             print("[crawl error] screenshot could not be taken")
             return {
@@ -46,3 +48,5 @@ async def crawl_and_return(url: str):
             "text": "",
             "images": []
         }
+    finally:
+        await crawler.close()
