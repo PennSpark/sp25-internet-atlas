@@ -116,8 +116,11 @@ async def get_coordinates(axis1: str = Query(...), axis2: str = Query(...), axis
     }
 
 @app.get("/get_edges")
-async def get_edges(websites: List[str] = Query(...)):
-    result = SUPABASE.table("browsing_counts").select("*").in_("origin", websites).in_("target", websites).execute()
+async def get_edges(websites: List[str] = Query(...), users: List[int] = Query(...)):
+    result = SUPABASE.rpc("count_users_by_site_pair", {
+        "user_ids": users, 
+        "websites": websites
+    }).execute()
     return JSONResponse(
         content={
             "results_count": len(result.data),
@@ -134,3 +137,15 @@ async def get_target_edge(website1: str = Query(...), website2: str = Query(...)
             "results": result.data
         }
     )
+
+@app.get("/user_edges")
+async def get_user_edges(user_id: int = Query(...)):
+    result = SUPABASE.table("browsing_complete").select("*").eq("user", user_id).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
+
+# gets all of the edges of a particular user
