@@ -17,7 +17,7 @@ interface Graph3DProps {
   descriptorY: string;
 }
 
-export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps): JSX.Element {
+export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<ForceGraph3DInstance | null>(null);
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
