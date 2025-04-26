@@ -31,44 +31,47 @@ export function setupGraphControls(controls: OrbitControls) {
 export function findConnectedPath(
   clickedLink: LinkType,
   graphData: { nodes: NodeType[]; links: LinkType[] },
-  setHighlightNodes: (val: Set<string>) => void,
-  setHighlightLinks: (val: Set<LinkType>) => void,
   graph: ForceGraph3DInstance,
-  setFrozen: (val: boolean) => void
+  setFrozen: (val: boolean) => void,
+  setPathNodes: (nodes: { id: string; x: number; y: number }[]) => void
 ) {
   const visited = new Set<string>();
   const queue = [clickedLink.source.id, clickedLink.target.id];
-  const newHighlightedLinks = new Set<LinkType>();
+  const nodesInPath: NodeType[] = [];
 
   while (queue.length) {
     const current = queue.shift();
     if (!current || visited.has(current)) continue;
     visited.add(current);
 
+    const node = graphData.nodes.find(n => n.id === current);
+    if (node) {
+      nodesInPath.push(node);
+    }
+
     graphData.links.forEach(link => {
       if (link.source.id === current && !visited.has(link.target.id)) {
         queue.push(link.target.id);
-        newHighlightedLinks.add(link);
       } else if (link.target.id === current && !visited.has(link.source.id)) {
         queue.push(link.source.id);
-        newHighlightedLinks.add(link);
       }
     });
   }
 
-  const involvedNodes = graphData.nodes.filter(n => visited.has(n.id));
-  const minX = Math.min(...involvedNodes.map(n => n.x!));
-  const maxX = Math.max(...involvedNodes.map(n => n.x!));
-  const minY = Math.min(...involvedNodes.map(n => n.y!));
-  const maxY = Math.max(...involvedNodes.map(n => n.y!));
-  const minZ = Math.min(...involvedNodes.map(n => n.z!));
-  const maxZ = Math.max(...involvedNodes.map(n => n.z!));
+  const minX = Math.min(...nodesInPath.map(n => n.x ?? 0));
+  const maxX = Math.max(...nodesInPath.map(n => n.x ?? 0));
+  const minY = Math.min(...nodesInPath.map(n => n.y ?? 0));
+  const maxY = Math.max(...nodesInPath.map(n => n.y ?? 0));
+  const minZ = Math.min(...nodesInPath.map(n => n.z ?? 0));
+  const maxZ = Math.max(...nodesInPath.map(n => n.z ?? 0));
 
   const center = {
     x: (minX + maxX) / 2,
     y: (minY + maxY) / 2,
     z: (minZ + maxZ) / 2,
   };
+
+  setFrozen(true);
 
   graph.cameraPosition(
     {
@@ -77,13 +80,30 @@ export function findConnectedPath(
       z: center.z + (maxZ - minZ),
     },
     center,
-    1000
+    1000 // ms transition
   );
 
-  setHighlightNodes(visited);
-  setHighlightLinks(newHighlightedLinks);
-  setFrozen(true);
+  // 📸 After camera movement, re-project to screen coordinates
+  setTimeout(() => {
+    const camera = graph.camera();
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const screenPositions = nodesInPath.map(node => {
+      const projected = new THREE.Vector3(node.x!, node.y!, node.z!).project(camera);
+
+      return {
+        id: node.id,
+        x: (projected.x * 0.5 + 0.5),
+        y: (-projected.y * 0.5 + 0.5),
+      };
+    });
+
+    setPathNodes(screenPositions);
+    console.log(screenPositions);
+  }, 1000); // match cameraPosition duration
 }
+
 
 export function addSceneDecorations(scene: THREE.Scene) {
   const axesLength = 200;
