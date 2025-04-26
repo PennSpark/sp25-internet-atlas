@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef} from 'react'
+import { useEffect, useRef, useMemo} from 'react'
 import * as d3 from 'd3'
 
 interface Node extends d3.SimulationNodeDatum {
@@ -195,7 +195,7 @@ export default function ForceGraph({
       .join("g")
       .classed("node", true)
       .style("cursor", "pointer")
-      .on("click", (event, d) => {
+      .on("click", (_, d) => {
         if (onNodeClick) onNodeClick(d.id)
       })
       .call(drag(simulation) as any)
@@ -206,16 +206,16 @@ export default function ForceGraph({
       .attr("width", 1)
       .attr("height", 1)
       .append("image")
-      .attr("href", "/Union.png")
+      .attr("href", "/Union.svg")
       .attr("width", 40)
       .attr("height", 40)
 
     // Add patterns for non-enter icons
     const iconFiles = {
-      "purpose": "icon2.png",
-      "how": "icon1.png",
-      "involved": "icon3.png",
-      "team": "icon4.png"
+      "purpose": "icon2.svg",
+      "how": "icon1.svg",
+      "involved": "icon3.svg",
+      "team": "icon4.svg"
     }
 
     Object.entries(iconFiles).forEach(([nodeId, iconFile]) => {
