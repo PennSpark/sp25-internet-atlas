@@ -5,11 +5,11 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
+    "module": "esnext",
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "types": ["vite/client"],
-  },
-  "module": "esnext",
-  "esModuleInterop": true,
-  "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  }
 }
