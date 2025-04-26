@@ -35,34 +35,61 @@ export default function ForceGraph({
   selectedNode
 }: ForceGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null)
-
-  // Calculate the offset for positioning nodes at left 25% of screen
-  const calculateTransform = useMemo(() => {
-    if (!selectedNode || !svgRef.current) return 0
+  // Track if we've already shifted
+  const hasShiftedRef = useRef<boolean>(false)
   
+  // Determine if we should shift the graph
+  const shouldShift = useMemo(() => {
+    // Don't shift if no selection or no SVG
+    if (!selectedNode || !svgRef.current) {
+      hasShiftedRef.current = false // Reset when no selection
+      return false
+    }
+    
+    // Prevent multiple shifts
+    if (hasShiftedRef.current) {
+      return true // Keep shifted if already shifted
+    }
+    
     const found = nodes.find(n => n.id === selectedNode)
-    if (!found || found.x == null || found.y == null) return 0
-  
+    if (!found || found.x == null) return false
+    
+    // Special handling for the middle node (purpose)
+    if (found.id === "purpose") {
+      console.log('Handling purpose node - always shift')
+      hasShiftedRef.current = true
+      return true
+    }
+    
+    // Get center of screen
+    const screenCenter = window.innerWidth / 2
+    
+    // Approximate node position on screen
     const svg = svgRef.current
-    const point = svg.createSVGPoint()
-    point.x = found.x
-    point.y = found.y
-    // Transform from SVG coordinates to screen coordinates
-    const screenPoint = point.matrixTransform(svg.getScreenCTM() || new DOMMatrix())
-  
-    // Target = 25% of the screen width from the left
-    const targetPosition = window.innerWidth * 0.25
-    console.log('Selected node:', found.id)
-    console.log("found.x:", found.x, "found.y:", found.y)
-    console.log('Screen X position:', screenPoint.x)
-    console.log('Target screen X:', targetPosition)
-  
-    const offset = screenPoint.x - targetPosition
-    console.log('Calculated offset:', offset)
-  
-    return offset < 0 ? 0 : offset
+    const svgRect = svg.getBoundingClientRect()
+    const svgCenterX = svgRect.left + svgRect.width / 2
+    
+    // Adjust node position to screen coordinate
+    const nodeScreenX = svgCenterX + found.x
+    
+    // Check if node is in left half of screen
+    console.log('Node position:', nodeScreenX, 'Screen center:', screenCenter)
+    const needsShift = nodeScreenX > screenCenter
+    
+    // Remember that we've shifted
+    if (needsShift) {
+      hasShiftedRef.current = true
+    }
+    
+    return needsShift
   }, [selectedNode, nodes])
   
+  // Reset the shifted state when selection changes
+  useEffect(() => {
+    if (!selectedNode) {
+      hasShiftedRef.current = false
+    }
+  }, [selectedNode])
 
   useEffect(() => {
     if (!svgRef.current) return
@@ -239,14 +266,15 @@ export default function ForceGraph({
       .attr("height", 30)
       .attr("fill", "#0b9b79")
 
-    // Add white background for "Our team" label
-    node.filter(d => d.id === "team")
-      .append("rect")
-      .attr("x", 30)
-      .attr("y", -15)
-      .attr("width", 120)
+    // Add white background for text labels (visible on hover or when selected)
+    node.append("rect")
+      .attr("x", d => d.isEnter ? -40 : 30)
+      .attr("y", d => d.isEnter ? 35 : -15)
+      .attr("width", d => getBackgroundWidth(d.id, d.isEnter, d.name))
       .attr("height", 30)
       .attr("fill", "white")
+      .attr("class", "text-bg")
+      .style("opacity", d => d.isEnter ? 0 : 0) // Initially hidden for all nodes
 
     // Labels
     node.append("text")
@@ -256,11 +284,49 @@ export default function ForceGraph({
       .attr("x", d => d.isEnter ? 0 : 30)
       .attr("y", d => d.isEnter ? 50 : "0.35em")
       .attr("fill", d => {
-        if (d.id === "team") return "black"
         if (d.id === "enter") return "black"
         return "white"
       })
       .text(d => d.name)
+
+    // Add hover behavior to nodes
+    node.on("mouseenter", function() {
+      const thisNode = d3.select(this);
+      const nodeData = thisNode.datum() as Node;
+      
+      // Skip hover effect for ENTER node
+      if (nodeData.isEnter) return;
+
+      thisNode.select(".text-bg")
+        .transition()
+        .duration(200)
+        .style("opacity", 1);
+        
+      thisNode.select("text")
+        .transition()
+        .duration(200)
+        .attr("fill", "black");
+    })
+    .on("mouseleave", function() {
+      const thisNode = d3.select(this);
+      const nodeData = thisNode.datum() as Node;
+      
+      // Skip hover effect for ENTER node
+      if (nodeData.isEnter) return;
+      
+      // Keep background for selected node
+      if (selectedNode === nodeData.id) return;
+      
+      thisNode.select(".text-bg")
+        .transition()
+        .duration(200)
+        .style("opacity", 0);
+        
+      thisNode.select("text")
+        .transition()
+        .duration(200)
+        .attr("fill", "white");
+    });
 
     simulation.on("tick", () => {
       link
@@ -346,12 +412,36 @@ export default function ForceGraph({
     })
   }, [selectedNode])
 
+  // Function to get specific widths for each node's background
+  function getBackgroundWidth(nodeId: string, isEnter: boolean = false, name: string = ""): number {
+    // Custom widths for specific nodes
+    const customWidths: Record<string, number> = {
+      "purpose": 100,
+      "how": 150,
+      "involved": 100,
+      "team": 75,
+      "enter": 80
+    };
+    
+    // If we have a custom width defined, use it
+    if (customWidths[nodeId]) {
+      return customWidths[nodeId];
+    }
+    
+    // Otherwise use the formula based on text length
+    return isEnter ? 80 : name.length * 10 - 7;
+  }
+
+  useEffect(() => {
+    console.log("Simulation useEffect (runs only once)")
+  }, [])
+
   return (
-    <svg 
-      ref={svgRef} 
+    <svg
+      ref={svgRef}
       className="w-full h-full transition-transform duration-500 ease-in-out"
       style={{
-        transform: selectedNode ? `translateX(-${calculateTransform}px)` : 'translateX(0)'
+        transform: (selectedNode && shouldShift) ? 'translateX(-200px)' : 'translateX(0)'
       }}
     />
   )
