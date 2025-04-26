@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import ForceGraph3D, { ForceGraph3DInstance } from '3d-force-graph';
 import * as THREE from 'three';
-// @ts-ignore
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import { getCoordinates, CoordinateResponse, getEdges } from '../api/api';

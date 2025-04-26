@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-// @ts-ignore
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { ForceGraph3DInstance } from '3d-force-graph';
 import { LinkType, NodeType } from '../types';
