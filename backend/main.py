@@ -102,16 +102,20 @@ async def process_website(url: str, job_id: str):
     try:
 
         # Crawl website
+        print(f"[Process] Crawling {url}...")
         crawl_data = await crawl_and_return(url)
+        print(f"[Process] Crawl success. Got text length={len(crawl_data['text'])}, images={len(crawl_data['images'])}")
         
         # Wait for rate limiter before making Gemini API call
         await gemini_rate_limiter.wait_if_needed()
         
         # Generate description and embedding
+        print(f"[Process] Generating description and embedding for {url}...")
         description = await img_and_txt_to_description(crawl_data["text"], crawl_data["images"])
         
         # Check if embedding was generated successfully
         if description["error"] is not None or description["embedding"] is None:
+            print(f"[Process] Embedding generation failed: {description['error']}")
             return {
                 "status": "error",
                 "message": f"Failed to generate embedding: {description['error']}"
@@ -119,16 +123,19 @@ async def process_website(url: str, job_id: str):
         
         # Access the embedding
         embedding_vector = description["embedding"]["embedding"]
+        print(f"[Process] Embedding vector length: {len(embedding_vector)}")
         
         # Check dimensions
         vector_dim = len(embedding_vector)
         if vector_dim != 3072:
+            print(f"[Process] Dimension mismatch: {vector_dim}")
             return {
                 "status": "error",
                 "message": f"Vector dimension mismatch: {vector_dim} (needs to be 3072)"
             }
         
         # If dimensions match, proceed with upsert
+        print(f"[Process] Upserting {url} into Pinecone...")
         index.upsert(
             vectors=[{
                 "id": url,
@@ -136,7 +143,7 @@ async def process_website(url: str, job_id: str):
             }],
             namespace=""
         )
-        print(f"completed {url}")
+        print(f"[Process] Upsert complete for {url}.")
         
         return {
             "status": "completed",
@@ -162,10 +169,25 @@ async def process_website(url: str, job_id: str):
 async def root():
     return {"message": "Hello World"}
 
+#for debugging
+def diagnose_missing_fetches(url: str, fetch_response):
+    """Prints a diagnosis if a fetch returns no vectors."""
+    print(f"[Diagnose] URL: {url}")
+    if not fetch_response.vectors:
+        print(f"[Diagnose] No vectors found for {url}")
+        if fetch_response.namespace != "":
+            print(f"[Diagnose] Warning: fetch returned non-empty namespace: {fetch_response.namespace}")
+        print(f"[Diagnose] Usage stats: {fetch_response.usage}")
+    else:
+        print(f"[Diagnose] Successfully fetched vector for {url}")
+
 @app.post("/embed-website")
 async def embed_website_api(url: str = Form(...)):
     print("=" * 80)
     fetch_response = index.fetch(ids=[url])
+    print(fetch_response)
+
+    diagnose_missing_fetches(url, fetch_response)
         
     if fetch_response.vectors:
         return {
@@ -205,14 +227,16 @@ async def get_job_status(job_id: str):
 async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)):
     # Wait for rate limiter before making Gemini API call for embedding
     await gemini_rate_limiter.wait_if_needed()
-    
-    # Query Pinecone index
+
+    query_vector_response = await generate_embedding(query)
+    query_vector = query_vector_response["embedding"] if isinstance(query_vector_response, dict) else query_vector_response
+
     search_results = index.query(
-        vector=generate_embedding(query),
+        vector=query_vector,
         top_k=k_returns,
         include_values=False,
         include_metadata=True
-    )
+    )   
     
     # Format results
     formatted_results = []
