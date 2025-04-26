@@ -185,7 +185,6 @@ def diagnose_missing_fetches(url: str, fetch_response):
 async def embed_website_api(url: str = Form(...)):
     print("=" * 80)
     fetch_response = index.fetch(ids=[url])
-    print(fetch_response)
 
     diagnose_missing_fetches(url, fetch_response)
         
