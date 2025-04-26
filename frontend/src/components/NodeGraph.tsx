@@ -1,12 +1,29 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import CircleSelector from "./CircleSelector"
 import Graph3D from './Graph3D'
 
 export default function NodeGraph() {
-    const [descriptorX, setDescriptorX] = useState<string | null>("piece")
-    const [descriptorY, setDescriptorY] = useState<string | null>("piece")
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+  
+    const descriptorX = searchParams.get('x') || "piece";
+    const descriptorY = searchParams.get('y') || "piece";
+  
+    const handleSelectX = (value: string) => {
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev);
+          newParams.set('x', value);
+          return newParams;
+        });
+      };
+      
+      const handleSelectY = (value: string) => {
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev);
+          newParams.set('y', value);
+          return newParams;
+        });
+      };      
 
     const handleLogoClick = () => {
         navigate('/')
@@ -27,14 +44,20 @@ export default function NodeGraph() {
             {/* Top Dial */}
             <div className="absolute left-1/2 -translate-x-1/2 -top-[400px] z-[20]">
                 <div className="rotate-180">
-                    <CircleSelector isLateral={false} onSelect={(value) => setDescriptorX(value)} />
+                    <CircleSelector 
+                    isLateral={false} 
+                    selectedValue={descriptorX}
+                    onSelect={(value) => handleSelectX(value)} />
                 </div>
             </div>
 
             {/* Right Dial */}
             <div className="absolute -right-[400px] top-1/2 -translate-y-1/2 z-[20]">
                 <div className="rotate-270">
-                    <CircleSelector isLateral={true} onSelect={(value) => setDescriptorY(value)} />
+                    <CircleSelector 
+                    isLateral={true} 
+                    selectedValue={descriptorY}
+                    onSelect={(value) => handleSelectY(value)} />
                 </div>
             </div>
 

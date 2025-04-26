@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef} from 'react'
+import { useEffect, useRef, memo } from 'react'
 import * as d3 from 'd3'
 
 interface Node extends d3.SimulationNodeDatum {
@@ -15,6 +15,7 @@ interface Link extends d3.SimulationLinkDatum<Node> {
   source: string | Node
   target: string | Node
   isDashed: boolean
+  initialDistance: number 
 }
 
 interface ForceGraphProps {
@@ -26,7 +27,7 @@ interface ForceGraphProps {
   selectedNode?: string | null
 }
 
-export default function ForceGraph({
+function ForceGraph({
   nodes,
   links,
   width = window.innerWidth / 2,
@@ -78,11 +79,31 @@ export default function ForceGraph({
       .attr("width", 40)
       .attr("height", 40)
 
-    // Build simulation
-    const simulation = d3.forceSimulation<Node>(nodes)
-      .force("link", d3.forceLink<Node, Link>(links).id(d => d.id).distance(150))
-      .force("charge", d3.forceManyBody().strength(-200))
-      .force("collision", d3.forceCollide().radius(30))
+
+          // Precompute original distances for each link
+    links.forEach(link => {
+      const source = link.source as Node;
+      const target = link.target as Node;
+
+      const dx = source.x - target.x;
+      const dy = source.y - target.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Save the initial distance
+      (link as Link).initialDistance = distance;
+    });
+
+      // Build simulation
+      const simulation = d3.forceSimulation<Node>(nodes)
+      .force("link", d3.forceLink<Node, Link>(links)
+      .id(d => d.id)
+      .distance(link => (link as Link).initialDistance || 50))
+
+      .force("charge", d3.forceManyBody().strength(-10))
+      .force("collision", d3.forceCollide().radius(30).strength(0.01))
+      .velocityDecay(0.9)
+
+
 
     const link = svg.append("g")
       .selectAll("line")
@@ -305,3 +326,5 @@ export default function ForceGraph({
 
   return <svg ref={svgRef} className="w-full h-full" />
 }
+
+export default memo(ForceGraph);
