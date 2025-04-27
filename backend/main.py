@@ -202,6 +202,15 @@ async def process_website(url: str, job_id: str):
 async def root():
     return {"message": "Hello World"}
 
+
+DEPLOY_TIME = datetime.now.isoformat() + "Z"
+
+@app.get("/buildinfo")
+async def build_info():
+    return {
+        "deployedAt": DEPLOY_TIME
+    }
+
 #for debugging
 def diagnose_missing_fetches(url: str, fetch_response):
     """Prints a diagnosis if a fetch returns no vectors."""
