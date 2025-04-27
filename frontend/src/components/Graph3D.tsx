@@ -95,7 +95,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       fgRef.current?.d3AlphaMin(1);
     } else {
       fgRef.current?.d3VelocityDecay(0.7);
-      fgRef.current?.d3AlphaMin(0.01);
+      fgRef.current?.d3AlphaMin(0.5);
     }}, [frozen]);
 
   useEffect(() => {
@@ -184,7 +184,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
           val: result.scores.reduce((a, b) => a + b, 0),
           x: result.scores[0] * scaleFactor,
           y: result.scores[1] * scaleFactor,
-          z: 0,
+          z: (Math.random() - 0.5) * scaleFactor * 2,
           rank: result.rank,
           isValidDomain: result.isValidDomain
         }));
@@ -209,6 +209,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
             num_users: entry.num_users,
           };
         }).filter((link): link is LinkType => link !== null);
+        
   
         console.log('Graph data:', { nodes, links });
         // When NEW graph data comes in, reset highlight
@@ -239,21 +240,23 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       .nodeLabel('name')
       .linkWidth(0.3)
       .backgroundColor('black')
-      .d3Force('charge', null)
-      .d3Force('center', null)
+      // .d3Force('charge', null)
+      // .d3Force('center', null)
+      // .d3VelocityDecay(0)
       .cameraPosition({ z: 500 });
-    
-    graph.d3Force('link')?.distance((link: LinkType) => {
-        const src = typeof link.source === 'object' ? link.source : graphData.nodes.find(n => n.id === link.source.id)!;
-        const tgt = typeof link.target === 'object' ? link.target : graphData.nodes.find(n => n.id === link.target.id)!;
-      
-        if (src && tgt) {
-          const dx = src.x! - tgt.x!;
-          const dy = src.y! - tgt.y!;
-          const dz = src.z! - tgt.z!;
-          return Math.sqrt(dx * dx + dy * dy + dz * dz); // keep their initial distance
+
+      graph.d3Force('link')?.distance((link: LinkType) => {
+        const srcNode = typeof link.source === 'object' ? link.source : graphData.nodes.find(n => n.id === link.source.id);
+        const tgtNode = typeof link.target === 'object' ? link.target : graphData.nodes.find(n => n.id === link.target.id);
+
+        if (srcNode && tgtNode) {
+          const dx = srcNode.x! - tgtNode.x!;
+          const dy = srcNode.y! - tgtNode.y!;
+          const dz = srcNode.z! - tgtNode.z!;
+          const baseDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          return baseDistance * 0.3;
         }
-        return 100; // fallback
+        return 100;  // fallback  
       });
       
   
@@ -274,8 +277,9 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
 
     graph
     
-      .d3Force('charge', null)
-      .d3Force('center', null)
+      // .d3Force('charge', null)
+      // .d3Force('center', null)
+      // .d3VelocityDecay(0.2)
       .graphData(graphData)
       .nodeAutoColorBy('id')
       .nodeLabel('name')
