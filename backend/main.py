@@ -49,7 +49,7 @@ job_queue = queue.Queue()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://sp25-internet-atlas-git-main-kimestelles-projects.vercel.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -203,7 +203,7 @@ async def root():
     return {"message": "Hello World"}
 
 
-DEPLOY_TIME = datetime.now.isoformat() + "Z"
+DEPLOY_TIME = datetime.now().isoformat() + "Z"
 
 @app.get("/buildinfo")
 async def build_info():
