@@ -585,12 +585,12 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
             transform: 'translate(-50%, -50%)',
           }}
         >
-          <h4 className="font-bold mb-2">Select a user:</h4>
-          <div className="flex flex-col gap-1">
+          <h2 className="font-bold mb-2">Select a user:</h2>
+          <div className="flex flex-col gap-1 p-2">
             {edgePopupData.users.map((userId) => (
               <button
                 key={userId}
-                className="bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 text-sm"
+                className="w-full bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 text-sm"
                 onClick={async () => {
                   try {
                     setUserPathLoading(true); 
@@ -635,7 +635,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
             ))}
           </div>
           <button
-            className="text-xs mt-2 underline"
+            className="w-full bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 text-sm"
             onClick={() => setEdgePopupData(null)}
           >
             Cancel

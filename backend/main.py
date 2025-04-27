@@ -53,13 +53,14 @@ app.add_middleware(
         "https://sp25-internet-atlas-git-main-kimestelles-projects.vercel.app",
         "https://sp25-internet-atlas.vercel.app",
         "http://localhost:5173",
-        "https://www.the-internet-atlas.com/"
-        "https://the-internet-atlas.com",
+        "https://www.the-internet-atlas.com",  # <-- NO trailing slash, and has comma
+        "https://the-internet-atlas.com",       # <-- correct
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Job status tracking
 job_status = {}
