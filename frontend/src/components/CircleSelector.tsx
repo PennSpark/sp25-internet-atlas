@@ -62,7 +62,7 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
     if (isDragging.current) {
       const newAngle = getAngle(e.clientX, e.clientY);
       const deltaAngle = newAngle - startAngle.current;
-      const resultAngle = initialAngle.current - deltaAngle;
+      const resultAngle = initialAngle.current - deltaAngle * 4;
       setAngle(resultAngle);
       currentDragAngle.current = resultAngle;
       // Update for smooth dragging
@@ -72,7 +72,7 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
   }, []);
 
   const snapToNearestWord = useCallback(() => {
-    let rawAngle = currentDragAngle.current % 360;
+    let rawAngle = (currentDragAngle.current % 360);
     if (rawAngle < 0) rawAngle += 360;
 
     const nearestIndex = Math.round(rawAngle / increment);

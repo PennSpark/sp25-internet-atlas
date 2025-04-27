@@ -500,6 +500,10 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     backgroundImage: "url('/overlayfan.svg')",
     backgroundSize: 'contain',
     backgroundRepeat: 'no-repeat',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: '1.2svh 2svh',
     borderRadius: '1svh',
     pointerEvents: 'none',
@@ -513,14 +517,15 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       transform: 'rotate(-25deg)',
       marginBottom: '3svh',
       marginTop: '3.5svh',
-      marginLeft: '3.5svh'
+      marginLeft: '3.5svh',
+      fontSize: '4svh',
     }}
   >
     {selectedNode.nodeId}
   </h2>
 
   {/* Node Stats */}
-  <ul className="handjet text-[2.2svh] text-[#06BCA7]/50 space-y-[1.5svh] pt-[3svh] pb-[4svh] mb-[5svh] ml-[9svh] w-[30svh]">
+  <ul className="handjet text-[2.2svh] text-[#06BCA7]/50 space-y-[1.5svh] pt-[4svh] pb-[4svh] mb-[4svh] ml-[9svh] w-[30svh]">
     <li className="flex justify-between">
       <span>Visitors:</span>
       <span className="text-[#06BCA7] text-opacity-100 mr-[5svh]">
@@ -543,12 +548,13 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
 
   {/* Type Indicator */}
   <h2
-    className="handjet text-[3svh] text-[#06BCA7] font-bold"
+    className="handjet text-[4svh] text-[#06BCA7] font-bold"
     style={{
       transform: 'rotate(25deg)',
       marginLeft: '3svh',
       marginBottom: '1svh',
       paddingBottom: '2svh',
+      fontSize:"4svh"
     }}
   >
     <span>
