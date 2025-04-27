@@ -95,8 +95,8 @@ export function findConnectedPath(
       return {
         id: node.id,
         // ✅ Corrected scaling
-        x: projected.x * (height / width),
-        y: projected.y
+        x: projected.x / (height * 2 / width),
+        y: -projected.y 
       };
     });
   

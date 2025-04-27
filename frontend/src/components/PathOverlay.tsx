@@ -32,7 +32,7 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
   const scaledNodes = pathNodes.map(node => ({
     id: node.id,
     x: node.x * windowSize.height + windowSize.width / 2,
-    y: node.y * windowSize.height + windowSize.height / 2,
+    y: node.y * windowSize.height / 2 + windowSize.height / 2,
   }));
 
   const pathData = scaledNodes.map((node, index) => {
@@ -117,9 +117,10 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
         if (!node) return null;
         return (
           <foreignObject x={node.x + 15} y={node.y - 27} width="300" height="50">
-            <h2 className="text-[#FF6363] text-md p-2 rounded bg-gradient-to-r from-black to-black/0">
-              [ {selectedNodeId} &rarr; ]
-            </h2>
+            <a className="text-[#FF6363] flex  p-2 rounded bg-gradient-to-r from-black to-black/0 cursor-pointer"
+            href={"https://www." + selectedNodeId} target="_blank">
+              <h2>[ {selectedNodeId} &rarr; ]</h2>
+            </a>
           </foreignObject>
         );
       })()}
