@@ -24,21 +24,21 @@ export interface Slide {
       },
       {
         title: "Step 1: Data Collection",
-        content: "Our data comes from a open source NIH dataset of online browsing behavior of 2,148 users.",
+        content: "We start with real browsing data from 2,148 users, using a public dataset shared by the NIH.",
         figure: "/figure1.png"
       },
       {
         title: "Step 2: Data Processing",
-        content: "We use motimodal vector embeddings to represent the browsing history of each user with text and image contents.",
+        content: "For each website a user visits, we extract both the text and images. Then, we use AI models to turn that information into numerical 'vectors' — long strings of numbers that capture the meaning and feel of the content. These vectors make it possible for a computer to compare different websites, even if the sites look very different to a human.",
         figure: "/figure2.png"
       },
       {
-        title: "Step 3: Data Clustering",
-        content: "Utilizing Principal Component Analysis (PCA), we generate clusters of websites based on their vector embeddings.",
+        title: "Step 3 (Next Step): Data Clustering",
+        content: "In the future, we plan to group websites together based on how similar their number patterns are, using a technique called PCA to help organize them.",
         figure: "/figure3.png"
       },
       {
-        title: "Step 4: Data Visualization",
+        title: "Step 4: Building a 3D Map",
         content: "We visualize the clusters of websites on a 3D graph.",
         figure: "/figure4.png"
       },
