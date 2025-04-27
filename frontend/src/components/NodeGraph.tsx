@@ -15,13 +15,13 @@ export default function NodeGraph() {
       if (!descriptorX || !descriptorY) {
         const newParams = new URLSearchParams(searchParams);
         if (!descriptorX) newParams.set('x', 'piece');
-        if (!descriptorY) newParams.set('y', 'piece');
+        if (!descriptorY) newParams.set('y', 'light');
         setSearchParams(newParams, { replace: true }); // replace history so it doesn't mess with back button
       }
     }, [descriptorX, descriptorY, searchParams, setSearchParams]);
 
     const xValue = descriptorX || "piece";
-    const yValue = descriptorY || "piece";
+    const yValue = descriptorY || "light";
 
     const handleSelectX = (value: string) => {
         setSearchParams(prev => {
