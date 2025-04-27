@@ -64,11 +64,11 @@ export default function NodeGraph() {
             {/* Caption */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-[20]">
                 <p className="text-[#757575] text-[24px] handjet">
-                    Currently showing user paths through  
+                    Showing journey through sites that give
                     <span className="text-[#0b9b79] px-2">
                            [{descriptorX || 'piece'} and {descriptorY || 'piece'}]
                     </span>
-                    -like websites
+                    vibe
                 </p>
             </div>
 

@@ -181,7 +181,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     graph.graphData(graphData)
       .nodeAutoColorBy('id')
       .nodeLabel('name')
-      .linkWidth(0.1)
+      .linkWidth(0.3)
       .backgroundColor('black')
       .d3Force('charge', null)
       .d3Force('center', null)
@@ -207,7 +207,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     // .linkCurvature('curvature')
     // .linkCurveRotation('rotation')
     .linkColor('gray')
-    .linkWidth(1)
+    .linkWidth(0.3)
     .nodeThreeObjectExtend(false)
     .nodeThreeObject(new THREE.Mesh(defaultSphere, defaultMaterial))
     .linkThreeObject((linkObj) => {
@@ -295,7 +295,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       setSelectedNode(node as NodeType); // Safe cast after guard
     })
     
-    .linkWidth(0.1)
+    .linkWidth(0.3)
     .backgroundColor('black')
     .cameraPosition({ z: 500 });
 

@@ -88,38 +88,41 @@ export function findConnectedPath(
     const camera = graph.camera();
     const width = window.innerWidth;
     const height = window.innerHeight;
-
+  
     const screenPositions = nodesInPath.map(node => {
       const projected = new THREE.Vector3(node.x!, node.y!, node.z!).project(camera);
-
+  
       return {
         id: node.id,
-        x: (projected.x * 0.5 + 0.5),
-        y: (-projected.y * 0.5 + 0.5),
+        // ✅ Corrected scaling
+        x: projected.x * (height / width),
+        y: projected.y
       };
     });
-
+  
     setPathNodes(screenPositions);
     console.log(screenPositions);
-  }, 1000); // match cameraPosition duration
+  }, 1000);
+  
 }
 
 
 export function addSceneDecorations(scene: THREE.Scene) {
-  const axesLength = 200;
+  const axesLength = 1000;
   const axes = new THREE.Group();
 
   axes.add(new THREE.ArrowHelper(
     new THREE.Vector3(1, 0, 0),
     new THREE.Vector3(0, 0, 0),
     axesLength,
-    0xffffff
+    0xff00cc
+
   ));
   axes.add(new THREE.ArrowHelper(
     new THREE.Vector3(0, 1, 0),
     new THREE.Vector3(0, 0, 0),
     axesLength,
-    0x0000ff
+    0xff0000
   ));
 
   const timeline = new THREE.Group();
@@ -179,34 +182,6 @@ export function addSceneDecorations(scene: THREE.Scene) {
       new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-axesLength, i, 0),
         new THREE.Vector3(axesLength, i, 0)
-      ]),
-      material
-    ));
-    grid.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(i, 0, -axesLength),
-        new THREE.Vector3(i, 0, axesLength)
-      ]),
-      material
-    ));
-    grid.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-axesLength, 0, i),
-        new THREE.Vector3(axesLength, 0, i)
-      ]),
-      material
-    ));
-    grid.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, i, -axesLength),
-        new THREE.Vector3(0, i, axesLength)
-      ]),
-      material
-    ));
-    grid.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, -axesLength, i),
-        new THREE.Vector3(0, axesLength, i)
       ]),
       material
     ));
