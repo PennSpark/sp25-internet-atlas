@@ -54,7 +54,7 @@ export default function NodeGraph({ data }: GraphProps) {
       .attr('r', d => Math.min(d.visitNumber, 20))  // radius scaled by visitNumber (max 20)
       .attr('stroke', '#539167')
       .attr('stroke-width', 2)
-      .on('click', function (event, d) {
+      .on('click', function (_, d) {
         setSelectedNode(d);
       });
 
