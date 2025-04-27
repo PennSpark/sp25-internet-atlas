@@ -28,3 +28,20 @@ A full‑stack web app that visualizes the “shape” of the web by plotting we
 | **Model Evaluation**      | • Python scripts under `scripts/` to ingest test URLs, run predefined queries, and compute metrics (top‑1 accuracy, NDCG@3, etc.) |
 | **Frontend Visualization**| • React + Vite<br>• D3.js (or PaperJS) for interactive zoom/pan, tooltips, and path highlighting            |
 | **Deployment**            | • Docker for backend & scraper<br>• Hosted on Render/Heroku + Pinecone + Supabase                           |
+
+## Core Features
+
+- Dynamic search and ranking of websites based on user-supplied descriptors
+- Retrieval and visualization of real navigation paths between websites
+- Interactive 2D and 3D graphs with zoom, pan, node and edge highlighting
+- Support for mobile and desktop interfaces
+- Integration of both text and visual embeddings for richer site representation
+
+## API Overview
+
+| Route             | Description                                                                                     |
+|-------------------|-------------------------------------------------------------------------------------------------|
+| `/embed-website`  | Accepts a URL and returns a combined text and image embedding                                    |
+| `/search-vectors` | Accepts a user-supplied descriptor and returns the top-K most similar websites                   |
+| `/get-graph`      | Returns a structured graph of nodes (websites) and edges (user navigation paths) for visualization (planned V2) |
+
