@@ -15,7 +15,6 @@ interface Link extends d3.SimulationLinkDatum<Node> {
   source: string | Node
   target: string | Node
   isDashed: boolean
-  initialDistance: number 
 }
 
 interface ForceGraphProps {
@@ -27,7 +26,7 @@ interface ForceGraphProps {
   selectedNode?: string | null
 }
 
-function ForceGraph({
+export default function ForceGraph({
   nodes,
   links,
   width = window.innerWidth / 2,
@@ -169,31 +168,11 @@ function ForceGraph({
       .lower()
     // -- END GRID BACKGROUND --
 
-
-          // Precompute original distances for each link
-    links.forEach(link => {
-      const source = link.source as Node;
-      const target = link.target as Node;
-
-      const dx = source.x - target.x;
-      const dy = source.y - target.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Save the initial distance
-      (link as Link).initialDistance = distance;
-    });
-
-      // Build simulation
-      const simulation = d3.forceSimulation<Node>(nodes)
-      .force("link", d3.forceLink<Node, Link>(links)
-      .id(d => d.id)
-      .distance(link => (link as Link).initialDistance || 50))
-
-      .force("charge", d3.forceManyBody().strength(-10))
-      .force("collision", d3.forceCollide().radius(30).strength(0.01))
-      .velocityDecay(0.9)
-
-
+    // Build simulation
+    const simulation = d3.forceSimulation<Node>(nodes)
+      .force("link", d3.forceLink<Node, Link>(links).id(d => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-200))
+      .force("collision", d3.forceCollide().radius(30))
 
     // Create the links
     const link = svg.append("g")
@@ -227,7 +206,7 @@ function ForceGraph({
       .attr("width", 1)
       .attr("height", 1)
       .append("image")
-      .attr("href", "/Union.png")
+      .attr("href", "/Union.svg")
       .attr("width", 34)
       .attr("height", 34)
 
@@ -498,5 +477,3 @@ function ForceGraph({
     />
   )
 }
-
-export default memo(ForceGraph);
