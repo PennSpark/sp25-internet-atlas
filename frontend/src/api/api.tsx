@@ -66,6 +66,28 @@ export interface PrecomputedRankingResponse {
   results: PrecomputedRankingResult[];
 }
 
+// GET /get_node_statistics
+export interface NodeStatisticsResponse {
+  status: string;
+  node: string;
+  mode: 'origin' | 'target';
+  visit_count: number;
+  total_time_spent: number;
+  avg_time_per_visit: number;
+}
+
+export async function getNodeStatistics(
+  node: string,
+  mode: 'origin' | 'target' = 'origin'
+): Promise<NodeStatisticsResponse> {
+  const params = new URLSearchParams();
+  params.append("node", node);
+  params.append("mode", mode);
+
+  const response = await axios.get<NodeStatisticsResponse>(`${API_BASE}/get_node_statistics`, { params });
+  return response.data;
+}
+
 export async function getPrecomputedRankings(axis1: string, axis2: string, axis3?: string): Promise<CoordinateResponse> {
   const response1 = await axios.get<PrecomputedRankingResponse>(`${API_BASE}/get_precomputed_rankings`, {
     params: { query: axis1 },

@@ -83,15 +83,16 @@ export default function PathOverlay({ pathNodes, userId, setFrozen, clearPathNod
         d={pathData}
         fill="none"
         stroke="white"
+        strokeOpacity={0.75}
         strokeWidth={2}
         strokeDasharray={`${svgScaleFactor} ${svgScaleFactor}`}
         strokeDashoffset={svgScaleFactor}
       >
         <animate
           attributeName="stroke-dashoffset"
-          from="0"
-          to={svgScaleFactor}
-          dur="3s"
+          from={-svgScaleFactor}
+          to="0"
+          dur="8s"
           fill="freeze"
           begin="0s"
         />

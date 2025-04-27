@@ -1,0 +1,6 @@
+id,origin,target,user,order,origin_start,time_active,switch_time
+43685,vapi.intapi.com,email.t-online.de,6,8960,2018-10-30T22:18:35,2,2018-10-30T22:18:37
+43686,email.t-online.de,cloud.nl.faz.net,6,8963,2018-10-30T22:18:37,2,2018-10-30T22:21:59
+43687,cloud.nl.faz.net,email.t-online.de,6,8964,2018-10-30T22:21:59,8,2018-10-30T22:22:07
+43688,email.t-online.de,vapi.intapi.com,6,8967,2018-10-30T22:22:07,4,2018-10-30T22:23:45
+43689,vapi.intapi.com,email.t-online.de,6,8968,2018-10-30T22:23:45,2,2018-10-30T22:24:25
