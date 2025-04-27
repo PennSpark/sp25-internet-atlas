@@ -49,7 +49,13 @@ job_queue = queue.Queue()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://sp25-internet-atlas-git-main-kimestelles-projects.vercel.app/"],
+    allow_origins=[
+        "https://sp25-internet-atlas-git-main-kimestelles-projects.vercel.app",
+        "https://sp25-internet-atlas.vercel.app",
+        "http://localhost:5173",
+        "https://www.the-internet-atlas.com/"
+        "https://the-internet-atlas.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
