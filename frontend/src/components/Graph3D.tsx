@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { getCoordinates, CoordinateResponse, getEdges } from '../api/api';
 import { NodeType, LinkType } from '../types';
 import { findConnectedPath, configureScene} from './graphHelpers';
+import PathOverlay from './PathOverlay';
 
 interface GraphData {
   nodes: NodeType[];
@@ -22,8 +23,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   const fgRef = useRef<ForceGraph3DInstance | null>(null);
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
 
-  const [highlightNodes, setHighlightNodes] = useState<Set<string> | null>(null);
-  const [highlightLinks, setHighlightLinks] = useState<Set<LinkType> | null>(null);
+  const [pathNodes, setPathNodes] = useState<{ id: string; x: number; y: number }[]>([]);
 
   const [selectedNode, setSelectedNode] = useState<NodeType | null>(null);
   const [overlayPos, setOverlayPos] = useState({ x: 0, y: 0 });
@@ -31,7 +31,6 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   const [frozen, setFrozen] = useState(false);
 
   const [loading, setLoading] = useState(false);
-
 
   useEffect(() => {
     const graph = new ForceGraph3D(containerRef.current!) as ForceGraph3DInstance;
@@ -54,6 +53,14 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     };
   }, []);
   
+  useEffect (() => {
+    if (frozen) {
+      fgRef.current?.d3VelocityDecay(1);
+      fgRef.current?.d3AlphaMin(1);
+    } else {
+      fgRef.current?.d3VelocityDecay(0.7);
+      fgRef.current?.d3AlphaMin(0.01);
+    }}, [frozen]);
 
   useEffect(() => {
     if (!fgRef.current || !selectedNode) return;
@@ -119,80 +126,69 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   
   
   useEffect(() => {
-    console.log('Initializing 3D graph...');
-    if (!fgRef.current) {
-      console.log('Graph not initialized or no nodes available.');
-      return;
-    };
-    setSelectedNode(null);
-    setHighlightNodes(null);
-    setHighlightLinks(null);
-    setFrozen(false);
-    if (!containerRef.current) return;
+    console.log('Fetching new graph data for new descriptors...');
+    
+    if (!fgRef.current) return;
+  
     const fetchGraphData = async () => {
-      console.log('Fetching graph data...');
       setLoading(true);
       try {
         const res: CoordinateResponse = await getCoordinates(descriptorX, descriptorY, 'soft');
-        console.log('Graph data response:', res);
-        const scaleFactor = 2000;
-    
+        const scaleFactor = 4000;
+  
         const nodes: NodeType[] = res.results.map((result) => ({
           id: result.id.replace(/^https?:\/\//, ''),
           name: result.id.replace(/^https?:\/\//, ''),
           val: result.scores.reduce((a, b) => a + b, 0),
           x: result.scores[0] * scaleFactor,
           y: result.scores[1] * scaleFactor,
-          z: (0) * scaleFactor,
+          z: 0,
         }));
-    
+  
         const websiteIds = nodes.map((node) => node.id);
-
         const edgeRes = await getEdges(websiteIds);
-        console.log('Fetched edges:', edgeRes);
-    
+  
         const links: LinkType[] = edgeRes.results.map((entry) => ({
           source: nodes.find(node => node.id === entry.origin)!,
           target: nodes.find(node => node.id === entry.target)!,
           curvature: 0.3,
           rotation: 0.5,
         }));
-    
+  
+        // When NEW graph data comes in, reset highlight
         setGraphData({ nodes, links });
-    
-        console.log('Graph data:', { nodes, links });
+        setSelectedNode(null);
+        setPathNodes([]);
+        setFrozen(false);
+  
       } catch (error) {
         console.error('Error fetching graph data or edges:', error);
       } finally {
-        setLoading(false); //end loading
+        setLoading(false);
       }
     };
-    
-
+  
     fetchGraphData();
-  }, [descriptorX, descriptorY, graphData.nodes.length]);
-
-  const defaultSphere = useMemo(() => new THREE.SphereGeometry(3), []);
-  const defaultMaterial = useMemo(() => new THREE.MeshBasicMaterial({ color: 0x999999 }), []);
-
-  const highlightedMaterial = useMemo(() => new THREE.MeshBasicMaterial({ color: 0xffffff }), []);
+  }, [descriptorX, descriptorY]);
+  
+  const defaultSphere = useMemo(() => new THREE.SphereGeometry(1), []);
+  const defaultMaterial = useMemo(() => new THREE.MeshBasicMaterial({ color: 0xffffff }), []);
 
   useEffect(() => {
-    if (!fgRef.current || !highlightLinks || !highlightNodes) return;
+    if (!fgRef.current || graphData.nodes.length === 0) return;
   
-    fgRef.current
-      .linkColor((link) => highlightLinks.has(link as LinkType) ? 'white' : 'gray')
-      .linkWidth((link) => highlightLinks.has(link as LinkType) ? 2 : 0.5)
-      
-      .nodeThreeObjectExtend(false)
-      .nodeThreeObject((node) => {
-        const id = typeof node.id === 'string' ? node.id : String(node.id ?? '');
-        const isHighlighted = highlightNodes?.has(id) ?? false;
-        return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
-      })
-      
-
-  }, [highlightNodes, highlightLinks, selectedNode, defaultMaterial, defaultSphere, highlightedMaterial]);
+    const graph = fgRef.current;
+    graph.graphData(graphData)
+      .nodeAutoColorBy('id')
+      .nodeLabel('name')
+      .linkWidth(0.3)
+      .backgroundColor('black')
+      .d3Force('charge', null)
+      .d3Force('center', null)
+      .d3VelocityDecay(0)
+      .cameraPosition({ z: 500 });
+  
+  }, [graphData]);
   
 
   useEffect(() => {
@@ -210,20 +206,11 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     .nodeThreeObjectExtend(true)
     // .linkCurvature('curvature')
     // .linkCurveRotation('rotation')
-    .linkColor((link) => {
-      return highlightLinks?.has(link as LinkType) ? 'white' : 'gray';
-    })
-    .linkWidth((link) => {
-      return highlightLinks?.has(link as LinkType) ? 2 : 0.5;
-    })
+    .linkColor('gray')
+    .linkWidth(0.3)
     .nodeThreeObjectExtend(false)
-    .nodeThreeObject((node) => {
-      const typedNode = node as NodeType;
-      const isHighlighted = highlightNodes?.has(typedNode.id) ?? false;
-      return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
-    })
+    .nodeThreeObject(new THREE.Mesh(defaultSphere, defaultMaterial))
     .linkThreeObject((linkObj) => {
-      const isHighlighted = highlightLinks?.has(linkObj as LinkType) ?? false;
     
       const source = typeof linkObj.source === 'object' ? linkObj.source as NodeType : null;
       const target = typeof linkObj.target === 'object' ? linkObj.target as NodeType : null;
@@ -236,7 +223,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       }
     
       const material = new THREE.MeshBasicMaterial({
-        color: isHighlighted ? 0xffffff : 0x999999,
+        color: 0xffffff,
         transparent: false,
         opacity: 1,
         blending: THREE.NoBlending,
@@ -278,10 +265,9 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       findConnectedPath(
         safeLink,
         graphData,
-        setHighlightNodes,
-        setHighlightLinks,
         fgRef.current!,
-        setFrozen
+        setFrozen,
+        setPathNodes
       );
     })
     
@@ -309,7 +295,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       setSelectedNode(node as NodeType); // Safe cast after guard
     })
     
-    .linkWidth(0.1)
+    .linkWidth(0.3)
     .backgroundColor('black')
     .cameraPosition({ z: 500 });
 
@@ -319,14 +305,12 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     }
   };
   
-  }, [defaultMaterial, defaultSphere, graphData, highlightLinks, highlightNodes, highlightedMaterial]);
+  }, [defaultMaterial, defaultSphere, graphData]);
 
   return (
   <div ref={containerRef} className="relative w-screen h-screen"
     onClick={() => {
       setSelectedNode(null);
-      setHighlightNodes(null);
-      setHighlightLinks(null);
       setFrozen(false);
     }}>
       {loading && (
@@ -356,6 +340,13 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
         >
           {selectedNode.name}
         </div>
+      )}
+      {pathNodes.length > 0 && (
+        <PathOverlay
+          pathNodes={pathNodes}
+          setFrozen={setFrozen}
+          clearPathNodes={() => setPathNodes([])}
+        />
       )}
     </div>
   )};

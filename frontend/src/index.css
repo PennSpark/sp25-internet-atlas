@@ -31,6 +31,20 @@ h1 {
   font-style: normal;
 }
 
+h2 {
+  font-family: "Handjet", sans-serif;
+  font-weight: 400;
+  font-size: 1.5em;
+  font-style: normal;
+}
+
+h5 {
+  font-family: "Handjet", sans-serif;
+  font-weight: 400;
+  font-size: 1em;
+  font-style: normal;
+}
+
 button {
   position: relative;
   z-index: 1;
