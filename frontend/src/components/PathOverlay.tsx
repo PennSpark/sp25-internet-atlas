@@ -1,16 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { NodeType } from '../types';
 
 interface PathOverlayProps {
-  pathNodes: { id: string; x: number; y: number }[];
+  pathNodes: NodeType[];
+  userId: number;
   setFrozen?: (val: boolean) => void;
   clearPathNodes?: () => void;
 }
 
-export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: PathOverlayProps) {
+const userStats = [
+  { websitesVisited: 4757, avgHours: 3.3},
+  { websitesVisited: 2319, avgHours: 1.29},
+  { websitesVisited: 4, avgHours: 0.02},
+  { websitesVisited: 4757, avgHours: 3.3},
+  { websitesVisited: 228, avgHours: 0.54},
+  { websitesVisited: 132, avgHours: 0.44},
+  { websitesVisited: 90, avgHours: 0.25},
+  { websitesVisited: 1379, avgHours: 1.04},
+  { websitesVisited: 244, avgHours: 1.02},
+  { websitesVisited: 132, avgHours: 0.44},
+]
+
+export default function PathOverlay({ pathNodes, userId, setFrozen, clearPathNodes }: PathOverlayProps) {
   const [windowSize, setWindowSize] = useState<{ width: number; height: number } | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null); // ⭐ Track selected node
+
+  const svgScaleFactor = pathNodes.length * 300;
 
   useEffect(() => {
     console.log(selectedNodeId);
@@ -33,12 +50,16 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
     id: node.id,
     x: node.x * windowSize.height + windowSize.width / 2,
     y: node.y * windowSize.height / 2 + windowSize.height / 2,
+    name: node.name,
+    isValidDomain: node.isValidDomain,
   }));
+
 
   const pathData = scaledNodes.map((node, index) => {
     const prefix = index === 0 ? 'M' : 'L';
     return `${prefix} ${node.x} ${node.y}`;
   }).join(' ');
+
 
   return (
     <svg
@@ -63,13 +84,13 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
         fill="none"
         stroke="white"
         strokeWidth={2}
-        strokeDasharray="100%"
-        strokeDashoffset="100%"
+        strokeDasharray={`${svgScaleFactor} ${svgScaleFactor}`}
+        strokeDashoffset={svgScaleFactor}
       >
         <animate
           attributeName="stroke-dashoffset"
-          from="1000"
-          to="0"
+          from="0"
+          to={svgScaleFactor}
           dur="3s"
           fill="freeze"
           begin="0s"
@@ -98,8 +119,10 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
               key={node.id}
               cx={node.x}
               cy={node.y}
-              r={7}
-              fill={selectedNodeId === node.id ? "#FF6363" : "white"} // ⭐ Red if selected
+              r={selectedNodeId === node.id ? 5 : 7}
+              fill="white" // ⭐ Red if selected
+              stroke={selectedNodeId === node.id ? "#FF6363" : "none"}
+              strokeWidth={selectedNodeId === node.id ? 5 : 0}
               style={{ cursor: 'pointer' }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -116,11 +139,17 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
         const node = scaledNodes.find(n => n.id === selectedNodeId);
         if (!node) return null;
         return (
-          <foreignObject x={node.x + 15} y={node.y - 27} width="300" height="50">
+          <foreignObject x={node.x + 15} y={node.y - 27} width="500" height="50">
+            {node.isValidDomain ? (
             <a className="text-[#FF6363] flex  p-2 rounded bg-gradient-to-r from-black to-black/0 cursor-pointer"
             href={"https://www." + selectedNodeId} target="_blank">
               <h2>[ {selectedNodeId} &rarr; ]</h2>
             </a>
+            ):(
+            <a className="text-gray-200 flex  p-2 rounded bg-gradient-to-r from-black to-black/0">
+              <h2>[ {selectedNodeId} &rarr; ]</h2>
+            </a>
+            )}
           </foreignObject>
         );
       })()}
@@ -134,21 +163,17 @@ export default function PathOverlay({ pathNodes, setFrozen, clearPathNodes }: Pa
           </div>
 
           <div className="mx-3 min-w-60 bg-[#0E0E0E]/75 px-4 py-2 mb-2">
-            <h2>Following: User #1's Path</h2>
+            <h2>Following: User #{userId}'s Path</h2>
           </div>
 
           <div className="mx-3 flex flex-col min-w-60 bg-[#0E0E0E]/75 px-4 py-2 mb-2">
             <div className='w-full flex flex-row justify-between'>
               <h5 className='opacity-50'>Websites Visited</h5>
-              <h5>15</h5>
+              <h5>{userStats[userId].websitesVisited}</h5>
             </div>
             <div className='w-full flex flex-row justify-between'>
               <h5 className='opacity-50'>Avg. Time/Day</h5>
-              <h5>2 hrs</h5>
-            </div>
-            <div className='w-full flex flex-row justify-between'>
-              <h5 className='opacity-50'>Genre</h5>
-              <h5>Indie Web</h5>
+              <h5>{userStats[userId].avgHours} hrs</h5>
             </div>
           </div>
 

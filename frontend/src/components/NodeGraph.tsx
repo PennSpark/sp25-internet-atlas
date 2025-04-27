@@ -62,7 +62,7 @@ export default function NodeGraph() {
             </div>
 
             {/* Caption */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-[20]">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-[20] select-none">
                 <p className="text-[#757575] text-[24px] handjet">
                     Showing journey through sites that give
                     <span className="text-[#0b9b79] px-2">

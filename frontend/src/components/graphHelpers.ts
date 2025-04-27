@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { ForceGraph3DInstance } from '3d-force-graph';
-import { LinkType, NodeType } from '../types';
+import { NodeType } from '../types';
+
 
 export function createTextTexture(text: string): THREE.Texture {
   const canvas = document.createElement('canvas');
@@ -28,35 +29,12 @@ export function setupGraphControls(controls: OrbitControls) {
   controls.maxDistance = 1000;
 }
 
-export function findConnectedPath(
-  clickedLink: LinkType,
-  graphData: { nodes: NodeType[]; links: LinkType[] },
+export function handleEdgeSelect(
+  nodesInPath: NodeType[],
   graph: ForceGraph3DInstance,
   setFrozen: (val: boolean) => void,
-  setPathNodes: (nodes: { id: string; x: number; y: number }[]) => void
+  setPathNodes: (nodes: NodeType[]) => void
 ) {
-  const visited = new Set<string>();
-  const queue = [clickedLink.source.id, clickedLink.target.id];
-  const nodesInPath: NodeType[] = [];
-
-  while (queue.length) {
-    const current = queue.shift();
-    if (!current || visited.has(current)) continue;
-    visited.add(current);
-
-    const node = graphData.nodes.find(n => n.id === current);
-    if (node) {
-      nodesInPath.push(node);
-    }
-
-    graphData.links.forEach(link => {
-      if (link.source.id === current && !visited.has(link.target.id)) {
-        queue.push(link.target.id);
-      } else if (link.target.id === current && !visited.has(link.source.id)) {
-        queue.push(link.source.id);
-      }
-    });
-  }
 
   const minX = Math.min(...nodesInPath.map(n => n.x ?? 0));
   const maxX = Math.max(...nodesInPath.map(n => n.x ?? 0));
@@ -96,7 +74,10 @@ export function findConnectedPath(
         id: node.id,
         // ✅ Corrected scaling
         x: projected.x / (height * 2 / width),
-        y: -projected.y 
+        y: -projected.y ,
+        z: 0,
+        rank: node.rank,
+        isValidDomain: node.isValidDomain,
       };
     });
   

@@ -2,14 +2,15 @@ export interface NodeType {
     id: string;
     name?: string;
     val?: number;
-    x?: number;
-    y?: number;
-    z?: number;
+    x: number;
+    y: number;
+    z: number;
+    rank?: number;
+    isValidDomain?: boolean;
   }
   
 export interface LinkType {
     source: NodeType;
     target: NodeType;
-    curvature?: number;
-    rotation?: number;
+    num_users: number;
   }

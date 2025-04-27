@@ -3,9 +3,9 @@ import ForceGraph3D, { ForceGraph3DInstance } from '3d-force-graph';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-import { getCoordinates, CoordinateResponse, getEdges } from '../api/api';
+import { getPrecomputedRankings, getEdges, CoordinateResponse, getTargetEdge, getUserEdges } from '../api/api';
 import { NodeType, LinkType } from '../types';
-import { findConnectedPath, configureScene} from './graphHelpers';
+import { configureScene, handleEdgeSelect } from './graphHelpers';
 import PathOverlay from './PathOverlay';
 
 interface GraphData {
@@ -23,7 +23,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   const fgRef = useRef<ForceGraph3DInstance | null>(null);
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
 
-  const [pathNodes, setPathNodes] = useState<{ id: string; x: number; y: number }[]>([]);
+  const [pathNodes, setPathNodes] = useState<NodeType[]>([]);
 
   const [selectedNode, setSelectedNode] = useState<NodeType | null>(null);
   const [overlayPos, setOverlayPos] = useState({ x: 0, y: 0 });
@@ -31,6 +31,19 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   const [frozen, setFrozen] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [edgeLoading, setEdgeLoading] = useState(false);
+  const [userPathLoading, setUserPathLoading] = useState(false);
+
+  const [edgePopupData, setEdgePopupData] = useState<{
+    users: number[];
+    pos: { x: number; y: number };
+    source: string;
+    target: string;
+  } | null>(null);
+
+  const [currentUser, setCurrentUser] = useState<number>(0);
+
+  const userIds = useMemo(() => [0, 1, 2, 3, 4, 5, 6, 7, 8], []);
 
   useEffect(() => {
     const graph = new ForceGraph3D(containerRef.current!) as ForceGraph3DInstance;
@@ -124,6 +137,11 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     }
   }, [frozen]);  
   
+  const normalizeDomain = (domain: string) => {
+    return domain
+      .toLowerCase();
+  };
+  
   
   useEffect(() => {
     console.log('Fetching new graph data for new descriptors...');
@@ -133,28 +151,42 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     const fetchGraphData = async () => {
       setLoading(true);
       try {
-        const res: CoordinateResponse = await getCoordinates(descriptorX, descriptorY, 'soft');
-        const scaleFactor = 4000;
+        const res: CoordinateResponse = await getPrecomputedRankings(descriptorX, descriptorY);
+        const scaleFactor = 600;
   
         const nodes: NodeType[] = res.results.map((result) => ({
-          id: result.id.replace(/^https?:\/\//, ''),
-          name: result.id.replace(/^https?:\/\//, ''),
+          id: result.id,
+          name: result.id,
           val: result.scores.reduce((a, b) => a + b, 0),
           x: result.scores[0] * scaleFactor,
           y: result.scores[1] * scaleFactor,
           z: 0,
+          rank: result.rank,
+          isValidDomain: result.isValidDomain
         }));
   
         const websiteIds = nodes.map((node) => node.id);
-        const edgeRes = await getEdges(websiteIds);
+
+        console.log('Website IDs:', websiteIds);
+        const edgeRes = await getEdges(websiteIds, userIds);
   
-        const links: LinkType[] = edgeRes.results.map((entry) => ({
-          source: nodes.find(node => node.id === entry.origin)!,
-          target: nodes.find(node => node.id === entry.target)!,
-          curvature: 0.3,
-          rotation: 0.5,
-        }));
+        const links: LinkType[] = edgeRes.results.map((entry) => {
+          const sourceNode = nodes.find(node => node.id === normalizeDomain(entry.origin));
+          const targetNode = nodes.find(node => node.id === normalizeDomain(entry.target));
+
+          if (!sourceNode || !targetNode) {
+            console.warn('Source or target node not found for link:', entry);
+            return null;
+          }
+
+          return {
+            source: sourceNode,
+            target: targetNode,
+            num_users: entry.num_users,
+          };
+        }).filter((link): link is LinkType => link !== null);
   
+        console.log('Graph data:', { nodes, links });
         // When NEW graph data comes in, reset highlight
         setGraphData({ nodes, links });
         setSelectedNode(null);
@@ -169,7 +201,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     };
   
     fetchGraphData();
-  }, [descriptorX, descriptorY]);
+  }, [descriptorX, descriptorY, userIds]);
   
   const defaultSphere = useMemo(() => new THREE.SphereGeometry(1), []);
   const defaultMaterial = useMemo(() => new THREE.MeshBasicMaterial({ color: 0xffffff }), []);
@@ -246,7 +278,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       return new THREE.Mesh(geometry, material);
     })
     
-    .onLinkClick((linkObj) => {
+    .onLinkClick(async (linkObj) => {
       const sourceNode = typeof linkObj.source === 'object' ? linkObj.source as NodeType : undefined;
       const targetNode = typeof linkObj.target === 'object' ? linkObj.target as NodeType : undefined;
     
@@ -255,23 +287,47 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
         return;
       }
     
-      const safeLink: LinkType = {
-        source: sourceNode,
-        target: targetNode,
-        curvature: (linkObj as { curvature?: number }).curvature ?? 0,
-        rotation: (linkObj as { rotation?: number }).rotation ?? 0,
-      };
+      try {
+        setEdgeLoading(true);
+        const res = await getTargetEdge(sourceNode.id, targetNode.id, userIds);
+        const users = res.results.map((r: any) => r.user);
     
-      findConnectedPath(
-        safeLink,
-        graphData,
-        fgRef.current!,
-        setFrozen,
-        setPathNodes
-      );
+        if (users.length === 0) {
+          alert('No users traveled along this path.');
+          return;
+        }
+    
+        // Get camera position to project to screen space
+        const camera = fgRef.current?.camera();
+        if (!camera) return;
+    
+        const midX = (sourceNode.x! + targetNode.x!) / 2;
+        const midY = (sourceNode.y! + targetNode.y!) / 2;
+        const midZ = (sourceNode.z! + targetNode.z!) / 2;
+    
+        const projected = new THREE.Vector3(midX, midY, midZ).project(camera);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+    
+        const screenPos = {
+          x: (projected.x * 0.5 + 0.5) * width,
+          y: (-projected.y * 0.5 + 0.5) * height,
+        };
+    
+        setEdgePopupData({
+          users,
+          pos: screenPos,
+          source: sourceNode.id,
+          target: targetNode.id,
+        });
+    
+      } catch (error) {
+        console.error('Error fetching edge users:', error);
+      } finally {
+        setEdgeLoading(false);
+      }
     })
     
-     
     .onNodeClick((node) => {
       if (typeof node.id !== 'string') {
         console.warn('Invalid node id:', node);
@@ -320,6 +376,18 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
           </div>
         </div>
       )}
+      {edgeLoading && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[60]">
+          <h1 className="text-white text-2xl animate-pulse">Loading edge users...</h1>
+        </div>
+      )}
+
+      {userPathLoading && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[60]">
+          <h1 className="text-white text-2xl animate-pulse">Tracing user path...</h1>
+        </div>
+      )}
+
       {selectedNode && (
         <div
           style={{
@@ -341,9 +409,78 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
           {selectedNode.name}
         </div>
       )}
+
+      {edgePopupData && (
+        <div
+          className="absolute bg-white/50 text-black rounded border border-white p-2 z-50"
+          style={{
+            top: edgePopupData.pos.y,
+            left: edgePopupData.pos.x,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <h4 className="font-bold mb-2">Select a user:</h4>
+          <div className="flex flex-col gap-1">
+            {edgePopupData.users.map((userId) => (
+              <button
+                key={userId}
+                className="bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 text-sm"
+                onClick={async () => {
+                  try {
+                    setUserPathLoading(true); 
+                    setFrozen(true);
+                    const userEdgesRes = await getUserEdges(userId, graphData.nodes.map((node) => node.id));
+                    const userPathNodes: NodeType[] = [];
+                    
+                    for (let i = 0; i < userEdgesRes.results.length - 1; i++) {
+                      const edge = userEdgesRes.results[i];
+                    
+                      const originNode = graphData.nodes.find(node => node.id === edge.origin);
+                      if (originNode) {
+                        userPathNodes.push({
+                          ...originNode,
+                          id: `${originNode.id}-origin-${i}`, // make id unique
+                        });
+                      }
+                    }
+
+                    const targetNode = graphData.nodes.find(node => node.id === userEdgesRes.results[userEdgesRes.results_count - 1].target);
+                    if (targetNode) {
+                      userPathNodes.push({
+                        ...targetNode,
+                        id: `${targetNode.id}-origin-${userEdgesRes.results.length}`, // make id unique
+                      });
+                    } else {
+                      console.warn('Target node not found:', userEdgesRes.results[userEdgesRes.results_count - 1].target);
+                    }
+                    setCurrentUser(userId);
+                    handleEdgeSelect(userPathNodes, fgRef.current!, setFrozen, setPathNodes);
+                    setEdgePopupData(null); // Close popup after selection
+
+                  } catch (error) {
+                    console.error('Error fetching user edges:', error);
+                  } finally {
+                    setUserPathLoading(false);
+                  }
+                }}
+              >
+                User {userId}
+              </button>
+            ))}
+          </div>
+          <button
+            className="text-xs mt-2 underline"
+            onClick={() => setEdgePopupData(null)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {pathNodes.length > 0 && (
         <PathOverlay
           pathNodes={pathNodes}
+          userId={currentUser}
           setFrozen={setFrozen}
           clearPathNodes={() => setPathNodes([])}
         />
