@@ -44,7 +44,7 @@ export default function NodeGraph() {
     };
 
     return (
-        <div className="relative w-full h-screen bg-black text-white">
+        <div className="relative w-[100svw] h-[100svh] bg-black text-white overflow-hidden">
             {/* Logo */}
             <div 
                 className="absolute z-[20] top-8 left-8 cursor-pointer hover:opacity-80 transition-opacity"

@@ -227,7 +227,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     fetchGraphData();
   }, [descriptorX, descriptorY, userIds]);
   
-  const defaultSphere = useMemo(() => new THREE.SphereGeometry(1), []);
+  const defaultSphere = useMemo(() => new THREE.SphereGeometry(2), []);
   const defaultMaterial = useMemo(() => new THREE.MeshBasicMaterial({ color: 0xffffff }), []);
 
   useEffect(() => {
@@ -241,8 +241,21 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       .backgroundColor('black')
       .d3Force('charge', null)
       .d3Force('center', null)
-      .d3VelocityDecay(0)
       .cameraPosition({ z: 500 });
+    
+    graph.d3Force('link')?.distance((link: LinkType) => {
+        const src = typeof link.source === 'object' ? link.source : graphData.nodes.find(n => n.id === link.source.id)!;
+        const tgt = typeof link.target === 'object' ? link.target : graphData.nodes.find(n => n.id === link.target.id)!;
+      
+        if (src && tgt) {
+          const dx = src.x! - tgt.x!;
+          const dy = src.y! - tgt.y!;
+          const dz = src.z! - tgt.z!;
+          return Math.sqrt(dx * dx + dy * dy + dz * dz); // keep their initial distance
+        }
+        return 100; // fallback
+      });
+      
   
   }, [graphData]);
   
@@ -263,7 +276,6 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
     
       .d3Force('charge', null)
       .d3Force('center', null)
-      .d3VelocityDecay(0)
       .graphData(graphData)
       .nodeAutoColorBy('id')
       .nodeLabel('name')
@@ -285,7 +297,8 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
 
           const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
           auraMesh.scale.set(4, 4, 4);
-
+          //not clickable
+          auraMesh.raycast = () => {};
           auraMesh.material.depthTest = false;
           auraMesh.material.depthWrite = false;
           auraMesh.renderOrder = 997;
@@ -294,6 +307,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
           if (isBigLandmark) {
             const bigAuraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
             bigAuraMesh.scale.set(8, 8, 8);
+            bigAuraMesh.raycast = () => {};
             bigAuraMesh.material.depthTest = false;
             bigAuraMesh.material.depthWrite = false;
             bigAuraMesh.renderOrder = 998;
