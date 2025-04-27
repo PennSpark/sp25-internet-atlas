@@ -58,8 +58,8 @@ export default function InternetAtlas() {
 
       {/* Header */}
       <div className="absolute top-8 left-24 flex items-center space-x-4">
-        <h1 className="text-[32px] tracking-wider handjet">INTERNET ATLAS</h1>
-        <span className="text-[#757575] handjet text-[32px]">For the cyber voyagers</span>
+        <h1 className="text-[28px] tracking-wider handjet">INTERNET ATLAS</h1>
+        <span className="text-[#757575] handjet text-[28px]">For the cyber voyagers</span>
       </div>
 
       {/* Main content */}
@@ -80,6 +80,7 @@ export default function InternetAtlas() {
             <SlideShow 
               slides={slides[selectedNode]} 
               selectedNode={selectedNode}
+              onClose={() => setSelectedNode(null)}
             />
           </div>
         )}

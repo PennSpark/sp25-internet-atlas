@@ -126,8 +126,11 @@ async def get_coordinates(axis1: str = Query(...), axis2: str = Query(...), axis
     }
 
 @app.get("/get_edges")
-async def get_edges(websites: List[str] = Query(...)):
-    result = SUPABASE.table("browsing_counts").select("*").in_("origin", websites).in_("target", websites).execute()
+async def get_edges(websites: List[str] = Query(...), users: List[int] = Query(...)):
+    result = SUPABASE.rpc("count_users_by_site_pair", {
+        "user_ids": users, 
+        "websites": websites
+    }).execute()
     return JSONResponse(
         content={
             "results_count": len(result.data),
@@ -136,11 +139,27 @@ async def get_edges(websites: List[str] = Query(...)):
     )
 
 @app.get("/target_edge")
-async def get_target_edge(website1: str = Query(...), website2: str = Query(...)):
-    result = SUPABASE.table("browsing_complete").select("*").eq("origin", website1).eq("target", website2).execute()
+async def get_target_edge(website1: str = Query(...), website2: str = Query(...), users: List[int] = Query(...)):
+    result = SUPABASE.rpc("count_user_records_between_sites", {
+        "user_ids": users, 
+        "origin_site": website1,
+        "target_site": website2
+    }).execute()
     return JSONResponse(
         content={
             "results_count": len(result.data),
             "results": result.data
         }
     )
+
+@app.get("/user_edges")
+async def get_user_edges(user_id: int = Query(...), websites: List[str] = Query(...)):
+    result = SUPABASE.table("browsing_complete").select("*").eq("user", user_id).in_("origin", websites).in_("target", websites).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
+
+# gets all of the edges of a particular user
