@@ -160,7 +160,7 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
       <div
         className="absolute -top-18 w-[15px] h-[12px] rotate-180"
         style={{
-          backgroundImage: 'url(/wheel-arrow.svg)',
+          backgroundImage: !isLateral ? 'url(/red-arrow.svg)' : 'url(/pink-arrow.svg)',
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

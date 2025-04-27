@@ -529,11 +529,11 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   }}
 >
   {/* Node ID Title */}
+  <a href={"https://www." + selectedNode.nodeId} target="_blank" className='w-full h-full cursor-pointer'>
   <h2
     className="handjet text-[4svh] text-[#06BCA7] font-bold"
     style={{
-      transform: 'rotate(-25deg)',
-      marginBottom: '3svh',
+      transform: 'rotate(-25deg)', 
       marginTop: '3.5svh',
       marginLeft: '3.5svh',
       fontSize: '4svh',
@@ -541,9 +541,10 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   >
     {selectedNode.nodeId}
   </h2>
+  </a>
 
   {/* Node Stats */}
-  <ul className="handjet text-[2.2svh] text-[#06BCA7]/50 space-y-[1.5svh] pt-[4svh] pb-[4svh] mb-[4svh] ml-[9svh] w-[30svh]">
+  <ul className="handjet text-[2.2svh] text-[#06BCA7]/50 space-y-[1.5svh] pb-[4svh] mb-[4svh] ml-[9svh] w-[30svh]">
     <li className="flex justify-between">
       <span>Visitors:</span>
       <span className="text-[#06BCA7] text-opacity-100 mr-[5svh]">
@@ -596,19 +597,19 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
 
       {edgePopupData && (
         <div
-          className="absolute bg-white/50 text-black rounded border border-white p-2 z-50"
+          className="absolute bg-black w-[30svh] text-white rounded = p-5 z-50"
           style={{
-            top: edgePopupData.pos.y,
-            left: edgePopupData.pos.x,
+            top: "50svh",
+            left: "50svw",
             transform: 'translate(-50%, -50%)',
           }}
         >
           <h2 className="font-bold mb-2">Select a user:</h2>
-          <div className="flex flex-col gap-1 p-2">
+          <div className="flex flex-col gap-3 p-2">
             {edgePopupData.users.map((userId) => (
               <button
                 key={userId}
-                className="w-full bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 text-sm"
+                className="w-full bg-gray-200/50 hover:bg-gray-300 rounded px-3 py-1"
                 onClick={async () => {
                   try {
                     setUserPathLoading(true); 
@@ -648,15 +649,15 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
                   }
                 }}
               >
-                User {userId}
+                <h2>User {userId}</h2>
               </button>
             ))}
           </div>
           <button
-            className="w-full bg-gray-200 hover:bg-gray-300 rounded px-3 py-1 text-sm"
+            className="w-full bg-gray-200/50 hover:bg-gray-300 rounded px-3 py-1 text-gray-200"
             onClick={() => setEdgePopupData(null)}
           >
-            Cancel
+            <h2>Cancel</h2>
           </button>
         </div>
       )}
