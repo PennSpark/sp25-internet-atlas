@@ -5,6 +5,9 @@ export interface NodeType {
     x?: number;
     y?: number;
     z?: number;
+    // landmark
+    isLandmark?: boolean;
+    visitCount?: number; 
   }
   
 export interface LinkType {

@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import { getCoordinates, CoordinateResponse, getEdges } from '../api/api';
 import { NodeType, LinkType } from '../types';
-import { findConnectedPath, configureScene} from './graphHelpers';
+import { findConnectedPath, configureScene } from './graphHelpers';
 
 interface GraphData {
   nodes: NodeType[];
@@ -33,43 +33,65 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   const [loading, setLoading] = useState(false);
 
 
+  const iconTexture = useMemo(() => {
+    const tex = new THREE.TextureLoader().load('/landmarkblue.svg');
+    tex.generateMipmaps = false;
+    tex.minFilter = THREE.LinearFilter;
+    return tex;
+  }, []);
+
+  const iconMaterial = useMemo(() =>
+    new THREE.SpriteMaterial({ map: iconTexture, transparent: true }),
+    [iconTexture]
+  );
+
+  const auraGeometry = useMemo(() => new THREE.SphereGeometry(4), []);
+  const auraMaterial = useMemo(() =>
+    new THREE.MeshBasicMaterial({
+      color: 0x06bca7,
+      transparent: true,
+      opacity: 0.15,
+      depthWrite: false
+    }),
+    []);
+
   useEffect(() => {
     const graph = new ForceGraph3D(containerRef.current!) as ForceGraph3DInstance;
     fgRef.current = graph;
-  
+
     configureScene(graph);
-  
+
     const handleResize = () => {
       if (fgRef.current) {
         fgRef.current.width(window.innerWidth);
         fgRef.current.height(window.innerHeight);
       }
     };
-  
+
     handleResize();
     window.addEventListener('resize', handleResize);
-  
+
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  
+
 
   useEffect(() => {
     if (!fgRef.current || !selectedNode) return;
-  
+
     const graph = fgRef.current;
     const camera = graph.camera();
-  
+
     let animationFrameId: number;
-  
+
     const update = () => {
       const node = graph.graphData().nodes.find(n => n.id === selectedNode.id);
       if (!node) {
         camera.lookAt(new THREE.Vector3(0, 0, 0));
         return
       };
-  
+
       // Camera offset (distance behind the node)
       const offset = 30;
       const camPos = new THREE.Vector3(
@@ -77,33 +99,33 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
         node.y! + offset,
         node.z! + offset
       );
-  
+
       camera.position.copy(camPos);
       camera.lookAt(new THREE.Vector3(node.x!, node.y!, node.z!));
       camera.updateMatrixWorld();
-  
+
       const controls = fgRef.current?.controls() as OrbitControls | undefined;
 
       if (controls) {
         controls.target.set(node.x!, node.y!, node.z!);
         controls.update();
       }
-        
+
       // Update overlay position
       const projected = new THREE.Vector3(node.x!, node.y!, node.z!).project(camera);
       const width = window.innerWidth;
       const height = window.innerHeight;
-  
+
       setOverlayPos({
-        x: (projected.x * 0.5 + 0.5) * width,
+        x: (projected.x * 0.5 + 0.55) * width,
         y: (-projected.y * 0.5 + 0.5) * height,
       });
-  
+
       animationFrameId = requestAnimationFrame(update);
     };
-  
+
     update();
-  
+
     return () => cancelAnimationFrame(animationFrameId);
   }, [selectedNode]);
 
@@ -115,9 +137,9 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       controls.enableZoom = shouldEnable;
       controls.enablePan = shouldEnable;
     }
-  }, [frozen]);  
-  
-  
+  }, [frozen]);
+
+
   useEffect(() => {
     console.log('Initializing 3D graph...');
     if (!fgRef.current) {
@@ -136,7 +158,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
         const res: CoordinateResponse = await getCoordinates(descriptorX, descriptorY, 'soft');
         console.log('Graph data response:', res);
         const scaleFactor = 2000;
-    
+
         const nodes: NodeType[] = res.results.map((result) => ({
           id: result.id.replace(/^https?:\/\//, ''),
           name: result.id.replace(/^https?:\/\//, ''),
@@ -145,21 +167,21 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
           y: result.scores[1] * scaleFactor,
           z: (0) * scaleFactor,
         }));
-    
+
         const websiteIds = nodes.map((node) => node.id);
 
         const edgeRes = await getEdges(websiteIds);
         console.log('Fetched edges:', edgeRes);
-    
+
         const links: LinkType[] = edgeRes.results.map((entry) => ({
           source: nodes.find(node => node.id === entry.origin)!,
           target: nodes.find(node => node.id === entry.target)!,
           curvature: 0.3,
           rotation: 0.5,
         }));
-    
+
         setGraphData({ nodes, links });
-    
+
         console.log('Graph data:', { nodes, links });
       } catch (error) {
         console.error('Error fetching graph data or edges:', error);
@@ -167,7 +189,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
         setLoading(false); //end loading
       }
     };
-    
+
 
     fetchGraphData();
   }, [descriptorX, descriptorY, graphData.nodes.length]);
@@ -179,160 +201,215 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
 
   useEffect(() => {
     if (!fgRef.current || !highlightLinks || !highlightNodes) return;
-  
+
     fgRef.current
       .linkColor((link) => highlightLinks.has(link as LinkType) ? 'white' : 'gray')
       .linkWidth((link) => highlightLinks.has(link as LinkType) ? 2 : 0.5)
-      
+
       .nodeThreeObjectExtend(false)
       .nodeThreeObject((node) => {
         const id = typeof node.id === 'string' ? node.id : String(node.id ?? '');
         const isHighlighted = highlightNodes?.has(id) ?? false;
         return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
       })
-      
+
 
   }, [highlightNodes, highlightLinks, selectedNode, defaultMaterial, defaultSphere, highlightedMaterial]);
-  
+
 
   useEffect(() => {
     if (!containerRef.current || graphData.nodes.length === 0 || !fgRef.current) return;
 
+    // [landmark] edge count
+    const nodeOutgoingEdges = new Map<string, number>();
+    graphData.links.forEach(link => {
+      const src = typeof link.source === 'object' ? link.source.id : link.source;
+      nodeOutgoingEdges.set(src, (nodeOutgoingEdges.get(src) || 0) + 1);
+    });
+
     const graph = fgRef.current!;
 
     graph
-    .d3Force('charge', null)  
-    .d3Force('center', null)
-    .d3VelocityDecay(0)
-    .graphData(graphData)
-    .nodeAutoColorBy('id')
-    .nodeLabel('name')
-    .nodeThreeObjectExtend(true)
-    // .linkCurvature('curvature')
-    // .linkCurveRotation('rotation')
-    .linkColor((link) => {
-      return highlightLinks?.has(link as LinkType) ? 'white' : 'gray';
-    })
-    .linkWidth((link) => {
-      return highlightLinks?.has(link as LinkType) ? 2 : 0.5;
-    })
-    .nodeThreeObjectExtend(false)
-    .nodeThreeObject((node) => {
-      const typedNode = node as NodeType;
-      const isHighlighted = highlightNodes?.has(typedNode.id) ?? false;
-      return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
-    })
-    .linkThreeObject((linkObj) => {
-      const isHighlighted = highlightLinks?.has(linkObj as LinkType) ?? false;
-    
-      const source = typeof linkObj.source === 'object' ? linkObj.source as NodeType : null;
-      const target = typeof linkObj.target === 'object' ? linkObj.target as NodeType : null;
-    
-      if (!source || !target) {
-        // return an invisible dummy object instead of null
-        const emptyObject = new THREE.Object3D();
-        emptyObject.visible = false;
-        return emptyObject;
-      }
-    
-      const material = new THREE.MeshBasicMaterial({
-        color: isHighlighted ? 0xffffff : 0x999999,
-        transparent: false,
-        opacity: 1,
-        blending: THREE.NoBlending,
-        depthWrite: true,
-      });
-    
-      const curve = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(source.x!, source.y!, source.z!),
-        new THREE.Vector3(
-          (source.x! + target.x!) / 2,
-          (source.y! + target.y!) / 2 + 10,
-          (source.z! + target.z!) / 2
-        ),
-        new THREE.Vector3(target.x!, target.y!, target.z!)
-      );
-    
-      const points = curve.getPoints(20);
-      const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 64, 0.5, 8, false);
-    
-      return new THREE.Mesh(geometry, material);
-    })
-    
-    .onLinkClick((linkObj) => {
-      const sourceNode = typeof linkObj.source === 'object' ? linkObj.source as NodeType : undefined;
-      const targetNode = typeof linkObj.target === 'object' ? linkObj.target as NodeType : undefined;
-    
-      if (!sourceNode || !targetNode) {
-        console.warn('Link source/target is not an object:', linkObj);
-        return;
-      }
-    
-      const safeLink: LinkType = {
-        source: sourceNode,
-        target: targetNode,
-        curvature: (linkObj as { curvature?: number }).curvature ?? 0,
-        rotation: (linkObj as { rotation?: number }).rotation ?? 0,
-      };
-    
-      findConnectedPath(
-        safeLink,
-        graphData,
-        setHighlightNodes,
-        setHighlightLinks,
-        fgRef.current!,
-        setFrozen
-      );
-    })
-    
-     
-    .onNodeClick((node) => {
-      if (typeof node.id !== 'string') {
-        console.warn('Invalid node id:', node);
-        return;
-      }
-    
-      const distance = 40;
-      const newPos = {
-        x: node.x! + distance,
-        y: node.y! + distance,
-        z: node.z! + distance,
-      };
-    
-      if (node.x !== undefined && node.y !== undefined && node.z !== undefined) {
-        const lookAt = { x: node.x, y: node.y, z: node.z };
-        fgRef.current?.cameraPosition(newPos, lookAt, 1000);
-      } else {
-        console.warn('Node coordinates are undefined:', node);
-      }
-      
-      setSelectedNode(node as NodeType); // Safe cast after guard
-    })
-    
-    .linkWidth(0.1)
-    .backgroundColor('black')
-    .cameraPosition({ z: 500 });
+      .d3Force('charge', null)
+      .d3Force('center', null)
+      .d3VelocityDecay(0)
+      .graphData(graphData)
+      .nodeAutoColorBy('id')
+      .nodeLabel('name')
+      .nodeThreeObjectExtend(true)
+      // .linkCurvature('curvature')
+      // .linkCurveRotation('rotation')
+      .linkColor((link) => {
+        return highlightLinks?.has(link as LinkType) ? 'white' : 'gray';
+      })
+      .linkWidth((link) => {
+        return highlightLinks?.has(link as LinkType) ? 2 : 0.5;
+      })
+      .nodeThreeObjectExtend(false)
+      .nodeThreeObject((node) => {
+        const typedNode = node as NodeType;
+        const isHighlighted = highlightNodes?.has(typedNode.id) ?? false;
+        const outgoingEdgeCount = nodeOutgoingEdges.get(typedNode.id) || 0;
+        const isLandmark = outgoingEdgeCount >= 20;
+        const isBigLandmark = outgoingEdgeCount >= 40;
 
-  return () => {
-    if (fgRef.current) {
-      fgRef.current.graphData({ nodes: [], links: [] });
-    }
-  };
-  
+
+        if (isLandmark) {
+          const group = new THREE.Group();
+
+          const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
+          auraMesh.scale.set(4, 4, 4);
+
+          auraMesh.material.depthTest = false;
+          auraMesh.material.depthWrite = false;
+          auraMesh.renderOrder = 997;
+          group.add(auraMesh);
+
+          if (isBigLandmark) {
+            const bigAuraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
+            bigAuraMesh.scale.set(8, 8, 8);
+            bigAuraMesh.material.depthTest = false;
+            bigAuraMesh.material.depthWrite = false;
+            bigAuraMesh.renderOrder = 998;
+            group.add(bigAuraMesh);
+          }
+
+          const sprite = new THREE.Sprite(iconMaterial);
+          sprite.scale.set(8, 8, 1);
+
+          sprite.material.depthTest = false;
+          sprite.renderOrder = 999;
+          group.add(sprite);
+
+          group.renderOrder = 997;
+
+          return group;
+        }
+
+        return new THREE.Mesh(defaultSphere, isHighlighted ? highlightedMaterial : defaultMaterial);
+      })
+      .linkThreeObject((linkObj) => {
+        const isHighlighted = highlightLinks?.has(linkObj as LinkType) ?? false;
+
+        const source = typeof linkObj.source === 'object' ? linkObj.source as NodeType : null;
+        const target = typeof linkObj.target === 'object' ? linkObj.target as NodeType : null;
+
+        if (!source || !target) {
+          const emptyObject = new THREE.Object3D();
+          emptyObject.visible = false;
+          return emptyObject;
+        }
+
+        const material = new THREE.MeshBasicMaterial({
+          color: isHighlighted ? 0xffffff : 0x999999,
+          transparent: false,
+          opacity: 1.0,
+          blending: THREE.NoBlending,
+          depthWrite: true,
+        });
+
+        const curve = new THREE.QuadraticBezierCurve3(
+          new THREE.Vector3(source.x!, source.y!, source.z!),
+          new THREE.Vector3(
+            (source.x! + target.x!) / 2,
+            (source.y! + target.y!) / 2 + 10,
+            (source.z! + target.z!) / 2
+          ),
+          new THREE.Vector3(target.x!, target.y!, target.z!)
+        );
+
+        const points = curve.getPoints(20);
+        const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 64, 0.5, 8, false);
+
+        return new THREE.Mesh(geometry, material);
+      })
+
+      .onLinkClick((linkObj) => {
+        const sourceNode = typeof linkObj.source === 'object' ? linkObj.source as NodeType : undefined;
+        const targetNode = typeof linkObj.target === 'object' ? linkObj.target as NodeType : undefined;
+
+        if (!sourceNode || !targetNode) {
+          console.warn('Link source/target is not an object:', linkObj);
+          return;
+        }
+
+        const safeLink: LinkType = {
+          source: sourceNode,
+          target: targetNode,
+          curvature: (linkObj as { curvature?: number }).curvature ?? 0,
+          rotation: (linkObj as { rotation?: number }).rotation ?? 0,
+        };
+
+        findConnectedPath(
+          safeLink,
+          graphData,
+          setHighlightNodes,
+          setHighlightLinks,
+          fgRef.current!,
+          setFrozen
+        );
+      })
+
+
+      .onNodeClick((node) => {
+        if (typeof node.id !== 'string') {
+          console.warn('Invalid node id:', node);
+          return;
+        }
+
+        const distance = 40;
+        const newPos = {
+          x: node.x! + distance,
+          y: node.y! + distance,
+          z: node.z! + distance,
+        };
+
+        if (node.x !== undefined && node.y !== undefined && node.z !== undefined) {
+          const lookAt = { x: node.x, y: node.y, z: node.z };
+          fgRef.current?.cameraPosition(newPos, lookAt, 1000);
+        } else {
+          console.warn('Node coordinates are undefined:', node);
+        }
+
+        setSelectedNode(node as NodeType);
+      })
+
+      .linkWidth(0.1)
+      .backgroundColor('black')
+      .cameraPosition({ z: 500 });
+
+    return () => {
+      if (fgRef.current) {
+        fgRef.current.graphData({ nodes: [], links: [] });
+      }
+    };
+
   }, [defaultMaterial, defaultSphere, graphData, highlightLinks, highlightNodes, highlightedMaterial]);
 
+
+  const outgoingEdgeCountForSelected = useMemo(() => {
+    if (!selectedNode) return 0;
+    return graphData.links.reduce((acc, l) => {
+      const src = typeof l.source === 'object' ? l.source.id : l.source;
+      return src === selectedNode.id ? acc + 1 : acc;
+    }, 0);
+  }, [selectedNode, graphData.links]);
+  
+  // Your landmark rule (≥ 20 outgoing links)
+  const isLandmark = outgoingEdgeCountForSelected >= 20;
+  
   return (
-  <div ref={containerRef} className="relative w-screen h-screen"
-    onClick={() => {
-      setSelectedNode(null);
-      setHighlightNodes(null);
-      setHighlightLinks(null);
-      setFrozen(false);
-    }}>
+    <div ref={containerRef} className="relative w-screen h-screen"
+      onClick={() => {
+        setSelectedNode(null);
+        setHighlightNodes(null);
+        setHighlightLinks(null);
+        setFrozen(false);
+      }}>
       {loading && (
         <div className="absolute inset-0 bg-[radial-gradient(circle,_black,_transparent)] opacity-70 flex items-center justify-center z-50">
           <div className='flex justify-center items-center animate-pulse w-50 aspect-[1/1] rounded-full border border-white'>
-          <h1>Loading...</h1>
+            <h1>Loading...</h1>
           </div>
         </div>
       )}
@@ -345,17 +422,55 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
             transform: 'translate(-0%, -50%)',
             width: '50svh',
             height: '60svh',
-            backgroundImage: "url('/overlay.svg')",
+            backgroundImage: "url('/overlayfan.svg')",
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
             padding: '6px 10px',
             borderRadius: '6px',
             pointerEvents: 'none',
-            zIndex: 10
+            zIndex: 99999
           }}
         >
-          {selectedNode.name}
+          <h2 className="handjet text-2xl text-[#06BCA7] font-bold mb-13 mt-15 ml-13"
+            style={{ transform: 'rotate(-25deg)' }}>{selectedNode.name}
+          </h2>
+
+          {/* NOTE:: values for the overlay after this line are all placeholder for now */}
+          {/* type only handles landmark or node */}
+          <ul className="handjet text-xl text-[#06BCA7]/50 space-y-1 pt-4 pb-6 mb-8 ml-20 w-full">
+            <li className="flex justify-between">
+              <span>Visitors:</span>
+              <span className="text-[#06BCA7] text-opacity-100 mr-35">
+                some #
+              </span>
+            </li>
+            <li className="flex justify-between">
+              <span>Total time:</span>
+              <span className="text-[#06BCA7] text-opacity-100 mr-35">
+                some #
+              </span>
+            </li>
+            <li className="flex justify-between">
+              <span>Avg time:</span>
+              <span className="text-[#06BCA7] text-opacity-100 mr-35">
+                some #
+              </span>
+            </li>
+          </ul>
+          
+          <h2 className="handjet text-2xl text-[#06BCA7] font-bold ml-10 mb-2 pb-4" 
+          style={{ transform: 'rotate(25deg)' }}>
+              <span>
+              TYPE:&nbsp;{isLandmark ? 'Landmark' : 'Node'}
+            </span>
+            <img
+              src="/lnmkicon.svg"
+              alt=""
+              className="inline-block align-text-bottom w-6 h-6 ml-15 mx-1"
+            />
+          </h2>
         </div>
       )}
     </div>
-  )};
+  )
+};
