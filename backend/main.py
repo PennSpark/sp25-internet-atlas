@@ -1,25 +1,38 @@
+
 # main.py with simplified background queue and rate limiting
 
 from PIL import Image 
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, File, UploadFile, Form, Query
 from fastapi.responses import JSONResponse
 from crawl_and_embed import crawl_and_return 
 from gemini_proc import img_and_txt_to_description, generate_embedding
 from pinecone import Pinecone 
 from dotenv import load_dotenv
+import io
 import os
 import uuid
+import numpy as np
 import asyncio
 import time
 from datetime import datetime
 import queue
 import threading
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig
+from typing import Optional, List
+from collections import defaultdict
+from supabase import create_client, Client
+
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 load_dotenv()
 
-# Initialize FastAPI app
+# Initialize Supabase client
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_ADMIN_KEY")
+SUPABASE: Client = create_client(url, key)
+
+#Initialize FastAPI
 app = FastAPI()
 
 # Initialize Pinecone
@@ -28,6 +41,14 @@ index = pc.Index(host=os.getenv("PINECONE_INDEX_HOST"))
 
 # Create a job queue
 job_queue = queue.Queue()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Job status tracking
 job_status = {}
@@ -188,6 +209,7 @@ def diagnose_missing_fetches(url: str, fetch_response):
     else:
         print(f"[Diagnose] Successfully fetched vector for {url}")
 
+
 @app.post("/embed-website")
 async def embed_website_api(url: str = Form(...)):
     print("=" * 80)
@@ -219,6 +241,7 @@ async def embed_website_api(url: str = Form(...)):
         "url": url
     }
 
+
 @app.get("/job-status/{job_id}")
 async def get_job_status(job_id: str):
     if job_id in job_status:
@@ -228,6 +251,7 @@ async def get_job_status(job_id: str):
             status_code=404,
             content={"status": "error", "message": "Job not found"}
         )
+
 
 @app.post("/search_vectors")
 async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)):
@@ -252,3 +276,79 @@ async def search_web_embeddings(query: str = Form(...), k_returns: int = Form(5)
     return {
         "results": formatted_results
     }
+
+@app.get("/get_coordinates")
+async def get_coordinates(axis1: str = Query(...), axis2: str = Query(...), axis3: Optional[str] = Query(None), k_returns: int = Query(500)):
+
+    queries = [axis1, axis2, axis3] if axis3 else [axis1, axis2]
+
+    # Get text embeddings for the search query
+    search_embeddings = [get_text_embeddings(q) for q in queries]
+    
+    # Query Pinecone index for the k closest vectors
+    search_results = [index.query(
+        vector=embedding,
+        top_k=k_returns,
+        include_values=False,  # Set to True if you want the actual vector values
+        include_metadata=True  # Include metadata to get URLs and text snippets
+    ) for embedding in search_embeddings]
+    
+    formatted_results = [
+        [{"id": match.get("id", ""), "score": match.get("score", 0)} for match in search_result.matches]
+        for search_result in search_results
+    ]
+
+    merged_dict = defaultdict(list)
+
+    for result_list in formatted_results:
+        for item in result_list:
+            merged_dict[item['id']].append(item['score'])
+
+    merged_results = [{'id': id_, 'scores': tuple(scores)} for id_, scores in merged_dict.items()]
+    
+    return {
+        "status": "success",
+        "queries": queries,
+        "axis_count": len(merged_results[0]) if merged_results else -1,
+        "results_count": len(merged_results),
+        "results": merged_results
+    }
+
+@app.get("/get_edges")
+async def get_edges(websites: List[str] = Query(...), users: List[int] = Query(...)):
+    result = SUPABASE.rpc("count_users_by_site_pair", {
+        "user_ids": users, 
+        "websites": websites
+    }).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
+
+@app.get("/target_edge")
+async def get_target_edge(website1: str = Query(...), website2: str = Query(...), users: List[int] = Query(...)):
+    result = SUPABASE.rpc("count_user_records_between_sites", {
+        "user_ids": users, 
+        "origin_site": website1,
+        "target_site": website2
+    }).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
+
+@app.get("/user_edges")
+async def get_user_edges(user_id: int = Query(...), websites: List[str] = Query(...)):
+    result = SUPABASE.table("browsing_complete").select("*").eq("user", user_id).in_("origin", websites).in_("target", websites).execute()
+    return JSONResponse(
+        content={
+            "results_count": len(result.data),
+            "results": result.data
+        }
+    )
+
+# gets all of the edges of a particular user

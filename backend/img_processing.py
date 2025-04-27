@@ -1,9 +1,11 @@
 from transformers import BlipProcessor, BlipForConditionalGeneration, CLIPProcessor, CLIPModel 
 import torch
 from fastapi import FastAPI, File, UploadFile, Form
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import io
 import numpy as np
+import httpx
+import aiohttp
 
 # Load the BLIP model and processor
 blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")  
@@ -44,6 +46,61 @@ async def get_image_embeddings(files: list[UploadFile] = File(...)):
     
     return combined_final_embedding
 
+async def get_image_embeddings_for_urls(urls: list[str]):
+    all_combined_embeddings = []
+    
+    # Process each uploaded image
+
+    async with aiohttp.ClientSession() as session:
+
+        for url in urls:
+            try:
+                response = await session.get(url)
+
+                if response.status != 200:
+                    print(f"Failed to fetch {url}: status {response.status}")
+                    continue
+
+                content_type = response.headers.get('Content-Type', '')
+                if 'svg' in content_type or url.endswith('.svg'):
+                    print(f"Skipping SVG image: {url}")
+                    continue
+
+                img_data = await response.read()
+
+                try:
+                    img = Image.open(io.BytesIO(img_data)).convert("RGB")
+                except UnidentifiedImageError:
+                    print(f"Cannot identify image file: {url}")
+                    continue
+
+                # Generate the description based on the uploaded image
+                description = generate_description(img)
+                
+                # Get individual image and text embeddings
+                image_embeddings, text_embeddings = make_clip_embedding(img, description=description)
+
+                # Combine the image and text embeddings (e.g., by averaging or concatenating)
+                # Option 1: Average the image and text embeddings
+                combined_embedding = np.mean([image_embeddings, text_embeddings], axis=0)
+
+                # Append the combined embedding to the list
+                all_combined_embeddings.append(combined_embedding)
+            
+            except Exception as e:
+                print(f"Error processing image {url}: {e}")
+                continue
+
+    if not all_combined_embeddings:
+        return None
+    
+    # Aggregate all combined embeddings (mean across all images)
+    combined_final_embedding = np.mean(all_combined_embeddings, axis=0).tolist()
+
+    # Return the final aggregated vector that captures the "mood/vibe"
+    
+    return combined_final_embedding
+
 def generate_description(img: Image.Image):
     # Try different prompts to get more detailed descriptions
     prompts = [
@@ -58,7 +115,7 @@ def generate_description(img: Image.Image):
 ]
     
     descriptions = []
-    for prompt in prompts:
+    for prompt in prompts[:1]:
         inputs = blip_processor(img, text=prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
         output = blip_model.generate(**inputs, min_length=30, max_length=70, num_beams=1, temperature=0.8, do_sample=True)
         description = blip_processor.decode(output[0], skip_special_tokens=True)

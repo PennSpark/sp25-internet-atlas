@@ -3,16 +3,18 @@ from transformers import DistilBertTokenizer, DistilBertModel
 
 # Load BERT model and tokenizer
 tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-model = DistilBertModel.from_pretrained("distilbert-base-uncased").to("cuda" if torch.cuda.is_available() else "cpu")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = DistilBertModel.from_pretrained("distilbert-base-uncased").to(device)
 
 # Define projection layer outside the function to ensure it's consistent across calls
-linear_projection = torch.nn.Linear(768, 512)
+linear_projection = torch.nn.Linear(768, 512).to(device)
 
 def get_text_embeddings(web_text: str):
     inputs = tokenizer(web_text, return_tensors="pt", padding=True, truncation=True, max_length=512)
     
     # Forward pass through BERT
     with torch.no_grad():
+        inputs = {i: k.to(device) for i, k in inputs.items()}
         outputs = model(**inputs)
     
     # Extract the [CLS] token embedding, which represents the entire sentence
