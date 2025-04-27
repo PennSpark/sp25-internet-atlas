@@ -59,9 +59,7 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
       {/* Header with figure number and title */}
       <div className="flex flex-col space-y-4 mb-8">
         <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 border border-[#757575] flex items-center justify-center">
-            <span className="text-[#757575] handjet">{String(currentSlide + 1).padStart(2, '0')}</span>
-          </div>
+          <span className="text-[#757575] handjet text-[36px]">{String(currentSlide + 1).padStart(2, '0')}</span>
         </div>
         <div className="bg-white w-full py-[1px] px-4">
           <h2 className="text-black handjet text-[26px]">{currentSlideData.title}</h2>
@@ -70,7 +68,7 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
 
       {/* Content */}
       <div className="flex-grow overflow-auto">
-        <p className="text-white text-[20px] mb-8">{currentSlideData.content}</p>
+        <p className="text-white text-[16px] mb-8">{currentSlideData.content}</p>
         {currentSlideData.figure && (
           <div className="mt-8">
             <img 

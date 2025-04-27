@@ -118,7 +118,7 @@ export default function ForceGraph({
     const defs = svg.append("defs")
 
     // 1) A repeating grid pattern
-    const gridSize = 50
+    const gridSize = 30
     defs.append("pattern")
       .attr("id", "grid-pattern")
       .attr("width", gridSize)
@@ -128,7 +128,7 @@ export default function ForceGraph({
       .attr("d", `M ${gridSize} 0 L 0 0 0 ${gridSize}`)
       .attr("fill", "none")
       .attr("stroke", "#666")       // Subtle grid color
-      .attr("stroke-width", 0.5)
+      .attr("stroke-width", 0.4)    // Reduced stroke width for finer lines
 
     // 2) A radial gradient that goes from opaque in center to transparent at edges
     const radialGradient = defs.append("radialGradient")
@@ -206,9 +206,9 @@ export default function ForceGraph({
       .attr("width", 1)
       .attr("height", 1)
       .append("image")
-      .attr("href", "/Union.svg")
-      .attr("width", 40)
-      .attr("height", 40)
+      .attr("href", "/Union.png")
+      .attr("width", 34)
+      .attr("height", 34)
 
     // Add patterns for non-enter icons
     const iconFiles = {
@@ -232,6 +232,7 @@ export default function ForceGraph({
     // Add icons for non-ENTER nodes
     node.filter(d => !d.isEnter)
       .append("rect")
+      .attr("class", "enter-button")
       .attr("x", -20)
       .attr("y", -20)
       .attr("width", 40)
@@ -241,29 +242,31 @@ export default function ForceGraph({
     // Add transparent box around Union image for ENTER node
     node.filter(d => d.isEnter === true)
       .append("rect")
-      .attr("x", -30)
-      .attr("y", -30)
-      .attr("width", 60)
-      .attr("height", 60)
+      .attr("x", -25)
+      .attr("y", -25)
+      .attr("width", 50)
+      .attr("height", 50)
       .attr("fill", "transparent")
       .attr("rx", 4)
 
     // Add Union image for ENTER node
     node.filter(d => d.isEnter === true)
       .append("rect")
-      .attr("x", -20)
-      .attr("y", -20)
-      .attr("width", 40)
-      .attr("height", 40)
+      .attr("class", "enter-icon")
+      .attr("x", -17)
+      .attr("y", -17)
+      .attr("width", 34)
+      .attr("height", 34)
       .attr("fill", "url(#union-pattern)")
 
     // Add green box under ENTER node
     node.filter(d => d.isEnter === true)
       .append("rect")
-      .attr("x", -40)
-      .attr("y", 30)
-      .attr("width", 80)
-      .attr("height", 30)
+      .attr("class", "enter-label")
+      .attr("x", -35)
+      .attr("y", 25)
+      .attr("width", 70)
+      .attr("height", 24)
       .attr("fill", "#0b9b79")
 
     // Add white background for text labels (visible on hover or when selected)
@@ -282,7 +285,7 @@ export default function ForceGraph({
       .attr("font-size", "24px")
       .attr("text-anchor", d => d.isEnter ? "middle" : "start")
       .attr("x", d => d.isEnter ? 0 : 30)
-      .attr("y", d => d.isEnter ? 50 : "0.35em")
+      .attr("y", d => d.isEnter ? 43 : "0.35em")  // Reduced from 50 for ENTER node
       .attr("fill", d => {
         if (d.id === "enter") return "black"
         return "white"
@@ -294,9 +297,24 @@ export default function ForceGraph({
       const thisNode = d3.select(this);
       const nodeData = thisNode.datum() as Node;
       
-      // Skip hover effect for ENTER node
-      if (nodeData.isEnter) return;
+      if (nodeData.isEnter) {
+        // Change color of icon on hover
+        thisNode.select(".enter-icon")
+          .transition()
+          .duration(200)
+          .attr("fill", "url(#union-pattern)")
+          .style("filter", "brightness(1.3)"); // Brighten the icon
+          
+        // Change green label color on hover
+        thisNode.select(".enter-label")
+          .transition()
+          .duration(200)
+          .attr("fill", "#30c0a0"); // Lighter green on hover
+          
+        return;
+      }
 
+      // Regular hover effect for other nodes
       thisNode.select(".text-bg")
         .transition()
         .duration(200)
@@ -311,8 +329,21 @@ export default function ForceGraph({
       const thisNode = d3.select(this);
       const nodeData = thisNode.datum() as Node;
       
-      // Skip hover effect for ENTER node
-      if (nodeData.isEnter) return;
+      if (nodeData.isEnter) {
+        // Remove icon brightness effect
+        thisNode.select(".enter-icon")
+          .transition()
+          .duration(200)
+          .style("filter", null);
+          
+        // Return label to original color
+        thisNode.select(".enter-label")
+          .transition()
+          .duration(200)
+          .attr("fill", "#0b9b79"); // Original green
+          
+        return;
+      }
       
       // Keep background for selected node
       if (selectedNode === nodeData.id) return;
