@@ -276,7 +276,7 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       .nodeThreeObject((node) => {
         const typedNode = node as NodeType;
         const outgoingEdgeCount = nodeOutgoingEdges.get(typedNode.id) || 0;
-        const isLandmark = outgoingEdgeCount >= 20;
+        const isLandmark = outgoingEdgeCount >= 25;
         const isBigLandmark = outgoingEdgeCount >= 40;
 
 
@@ -490,61 +490,84 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
 
       {selectedNode && (
         <div
-          style={{
-            position: 'absolute',
-            top: overlayPos.y,
-            left: overlayPos.x,
-            transform: 'translate(-0%, -50%)',
-            width: '50svh',
-            height: '60svh',
-            backgroundImage: "url('/overlayfan.svg')",
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            padding: '6px 10px',
-            borderRadius: '6px',
-            pointerEvents: 'none',
-            zIndex: 99999
-          }}
-        >
-          <h2 className="handjet text-2xl text-[#06BCA7] font-bold mb-13 mt-15 ml-13"
-            style={{ transform: 'rotate(-25deg)' }}>{selectedNode.nodeId}
-          </h2>
+  style={{
+    position: 'absolute',
+    top: overlayPos.y,
+    left: overlayPos.x,
+    transform: 'translate(-0%, -50%)',
+    width: '50svh',
+    height: '60svh',
+    backgroundImage: "url('/overlayfan.svg')",
+    backgroundSize: 'contain',
+    backgroundRepeat: 'no-repeat',
+    padding: '1.2svh 2svh',
+    borderRadius: '1svh',
+    pointerEvents: 'none',
+    zIndex: 99999
+  }}
+>
+  {/* Node ID Title */}
+  <h2
+    className="handjet text-[4svh] text-[#06BCA7] font-bold"
+    style={{
+      transform: 'rotate(-25deg)',
+      marginBottom: '3svh',
+      marginTop: '3.5svh',
+      marginLeft: '3.5svh'
+    }}
+  >
+    {selectedNode.nodeId}
+  </h2>
 
-          {/* NOTE:: values for the overlay after this line are all placeholder for now */}
-          {/* type only handles landmark or node */}
-          <ul className="handjet text-xl text-[#06BCA7]/50 space-y-1 pt-4 pb-6 mb-8 ml-20 w-full">
-            <li className="flex justify-between">
-              <span>Visitors: </span>
-              <span className="text-[#06BCA7] text-opacity-100 mr-35">
-                {selectedNode.stats.visit_count}
-              </span>
-            </li>
-            <li className="flex justify-between">
-              <span>Total time: </span>
-              <span className="text-[#06BCA7] text-opacity-100 mr-35">
-                {selectedNode.stats.total_time_spent}
-              </span>
-            </li>
-            <li className="flex justify-between">
-              <span>Avg time: </span>
-              <span className="text-[#06BCA7] text-opacity-100 mr-35">
-                {selectedNode.stats.avg_time_per_visit}
-              </span>
-            </li>
-          </ul>
-          
-          <h2 className="handjet text-2xl text-[#06BCA7] font-bold ml-10 mb-2 pb-4" 
-          style={{ transform: 'rotate(25deg)' }}>
-              <span>
-              TYPE:&nbsp;{isLandmark ? 'Landmark' : 'Node'}
-            </span>
-            <img
-              src="/lnmkicon.svg"
-              alt=""
-              className="inline-block align-text-bottom w-6 h-6 ml-15 mx-1"
-            />
-          </h2>
-        </div>
+  {/* Node Stats */}
+  <ul className="handjet text-[2.2svh] text-[#06BCA7]/50 space-y-[1.5svh] pt-[3svh] pb-[4svh] mb-[5svh] ml-[9svh] w-[30svh]">
+    <li className="flex justify-between">
+      <span>Visitors:</span>
+      <span className="text-[#06BCA7] text-opacity-100 mr-[5svh]">
+        {selectedNode.stats.visit_count}
+      </span>
+    </li>
+    <li className="flex justify-between">
+      <span>Total time:</span>
+      <span className="text-[#06BCA7] text-opacity-100 mr-[5svh]">
+        {selectedNode.stats.total_time_spent}
+      </span>
+    </li>
+    <li className="flex justify-between">
+      <span>Avg time:</span>
+      <span className="text-[#06BCA7] text-opacity-100 mr-[5svh]">
+        {selectedNode.stats.avg_time_per_visit}
+      </span>
+    </li>
+  </ul>
+
+  {/* Type Indicator */}
+  <h2
+    className="handjet text-[3svh] text-[#06BCA7] font-bold"
+    style={{
+      transform: 'rotate(25deg)',
+      marginLeft: '3svh',
+      marginBottom: '1svh',
+      paddingBottom: '2svh',
+    }}
+  >
+    <span>
+      TYPE:&nbsp;{isLandmark ? 'Landmark' : 'Node'}
+    </span>
+    <img
+      src="/lnmkicon.svg"
+      alt=""
+      className="inline-block align-text-bottom"
+      style={{
+        width: '5svh',
+        height: '5svh',
+        marginLeft: '3svh',
+        marginRight: '1svh',
+      }}
+    />
+  </h2>
+</div>
+
       )}
 
       {edgePopupData && (

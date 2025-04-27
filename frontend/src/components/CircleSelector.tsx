@@ -71,7 +71,7 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
     }
   }, []);
 
-  const snapToNearestWord = () => {
+  const snapToNearestWord = useCallback(() => {
     let rawAngle = currentDragAngle.current % 360;
     if (rawAngle < 0) rawAngle += 360;
 
@@ -87,12 +87,12 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
     } else {
       setAngle(-invertedIndex * increment); // still snap rotation even if no new select
     }
-  };
+  }, [categories, increment, onSelect, selectedCategory, selectedValue]);
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
     snapToNearestWord();
-  }, []);
+  }, [snapToNearestWord]);
 
   const handleWordClick = (index: number) => {
     if (index !== selectedCategory) {

@@ -1,33 +1,47 @@
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import CircleSelector from "./CircleSelector"
-import Graph3D from './Graph3D'
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import CircleSelector from "./CircleSelector";
+import Graph3D from './Graph3D';
 
 export default function NodeGraph() {
-    const navigate = useNavigate()
-    const [searchParams, setSearchParams] = useSearchParams()
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
   
-    const descriptorX = searchParams.get('x') || "piece";
-    const descriptorY = searchParams.get('y') || "piece";
-  
+    const descriptorX = searchParams.get('x');
+    const descriptorY = searchParams.get('y');
+
+    // Fix URL if missing x or y
+    useEffect(() => {
+      if (!descriptorX || !descriptorY) {
+        const newParams = new URLSearchParams(searchParams);
+        if (!descriptorX) newParams.set('x', 'piece');
+        if (!descriptorY) newParams.set('y', 'piece');
+        setSearchParams(newParams, { replace: true }); // replace history so it doesn't mess with back button
+      }
+    }, [descriptorX, descriptorY, searchParams, setSearchParams]);
+
+    const xValue = descriptorX || "piece";
+    const yValue = descriptorY || "piece";
+
     const handleSelectX = (value: string) => {
         setSearchParams(prev => {
           const newParams = new URLSearchParams(prev);
           newParams.set('x', value);
           return newParams;
         });
-      };
+    };
       
-      const handleSelectY = (value: string) => {
+    const handleSelectY = (value: string) => {
         setSearchParams(prev => {
           const newParams = new URLSearchParams(prev);
           newParams.set('y', value);
           return newParams;
         });
-      };      
+    };
 
     const handleLogoClick = () => {
-        navigate('/')
-    }
+        navigate('/');
+    };
 
     return (
         <div className="relative w-full h-screen bg-black text-white">
@@ -45,9 +59,10 @@ export default function NodeGraph() {
             <div className="absolute left-1/2 -translate-x-1/2 -top-[400px] z-[20]">
                 <div className="rotate-180">
                     <CircleSelector 
-                    isLateral={false} 
-                    selectedValue={descriptorX}
-                    onSelect={(value) => handleSelectX(value)} />
+                        isLateral={false} 
+                        selectedValue={xValue}
+                        onSelect={(value) => handleSelectX(value)}
+                    />
                 </div>
             </div>
 
@@ -55,28 +70,30 @@ export default function NodeGraph() {
             <div className="absolute -right-[400px] top-1/2 -translate-y-1/2 z-[20]">
                 <div className="rotate-270">
                     <CircleSelector 
-                    isLateral={true} 
-                    selectedValue={descriptorY}
-                    onSelect={(value) => handleSelectY(value)} />
+                        isLateral={true} 
+                        selectedValue={yValue}
+                        onSelect={(value) => handleSelectY(value)}
+                    />
                 </div>
             </div>
 
             {/* Caption */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-[20] select-none">
                 <p className="text-[#757575] text-[24px] handjet">
-                    Showing journey through sites that give
+                    Mapping web movement in
                     <span className="text-[#0b9b79] px-2">
-                           [{descriptorX || 'piece'} and {descriptorY || 'piece'}]
+                           [{xValue} and {yValue}]
                     </span>
-                    vibe
+                    atmospheres
                 </p>
             </div>
 
-            { descriptorX && descriptorY &&
-            <Graph3D
-                descriptorX={descriptorX}
-                descriptorY={descriptorY}/>
-        }       
+            { xValue && yValue &&
+              <Graph3D
+                descriptorX={xValue}
+                descriptorY={yValue}
+              />
+            }
         </div>
     )
-} 
+}
