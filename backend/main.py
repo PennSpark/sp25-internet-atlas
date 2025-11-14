@@ -880,3 +880,55 @@ async def get_precomputed_rankings(query: str = Query(...)):
 
 #     except Exception as e:
 #         return JSONResponse(content={"status": "error", "message": str(e)})
+# ---- add near your other imports ----
+import os, json
+from pathlib import Path
+from typing import List
+from fastapi.responses import JSONResponse
+
+OUT_PATH = Path("public/jsons/edges.json")
+
+def export_edges_to_static(websites: List[str], users: List[int], page_size: int = 1000) -> str:
+    all_results = []
+    page = 1
+    while True:
+        offset = (page - 1) * page_size
+        query = SUPABASE.rpc("count_users_by_site_pair", {
+            "user_ids": users,
+            "websites": websites
+        }).range(offset, offset + page_size - 1)
+        result = query.execute()
+        rows = result.data or []
+        if not rows:
+            break
+        all_results.extend(rows)
+        if len(rows) < page_size:
+            break
+        page += 1
+
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "results_count": len(all_results),
+        "results": all_results
+    }
+    OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    return str(OUT_PATH)
+
+async def main():
+#convert all files in v1
+    report = export_edges_to_static(
+        websites=[
+            "facebook.com", "youtube.com", "amazon.com", "wikipedia.org",
+            "twitter.com", "instagram.com", "linkedin.com", "netflix.com",
+            "reddit.com", "pinterest.com", "ebay.com", "twitch.tv",
+            "nytimes.com", "bing.com", "microsoft.com", "live.com",
+            "office.com", "zoom.us", "github.com", "stackoverflow.com"
+        ],
+        users=list(range(9)),
+        page_size=1000
+    )
+    print(report)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

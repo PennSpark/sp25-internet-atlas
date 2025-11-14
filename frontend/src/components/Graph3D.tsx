@@ -161,6 +161,10 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
   }, [frozen]);  
   
   const normalizeDomain = (domain: string) => {
+    //remove http://, https://, www. and lowercase
+    if (domain.startsWith("http://")) domain = domain.slice(7);
+    else if (domain.startsWith("https://")) domain = domain.slice(8);
+    if (domain.startsWith("www.")) domain = domain.slice(4);
     return domain
       .toLowerCase();
   };
@@ -190,14 +194,13 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
         }));
   
         const websiteIds = nodes.map((node) => node.id);
-
+        
         console.log('Website IDs:', websiteIds);
-        const edgeRes = await getEdges(websiteIds, userIds);
-  
+        const edgeRes = await getEdges(websiteIds);
+        console.log('Fetched edges:', edgeRes);
         const links: LinkType[] = edgeRes.results.map((entry) => {
           const sourceNode = nodes.find(node => node.id === normalizeDomain(entry.origin));
           const targetNode = nodes.find(node => node.id === normalizeDomain(entry.target));
-
           if (!sourceNode || !targetNode) {
             console.warn('Source or target node not found for link:', entry);
             return null;
@@ -378,8 +381,8 @@ export default function Graph3D({ descriptorX, descriptorY }: Graph3DProps) {
       
         try {
           setEdgeLoading(true);
-          const res = await getTargetEdge(sourceNode.id, targetNode.id, userIds);
-          const users = res.results.map((r: any) => r.user);
+          const res = await getTargetEdge(sourceNode.id, targetNode.id);
+          const users = res.results.map((r) => r.user);
       
           if (users.length === 0) {
             alert('No users traveled along this path.');

@@ -7,6 +7,8 @@ import ForceGraph from './components/ForceGraph'
 import SlideShow from './components/SlideShow'
 import { slides, NodeId } from './data/slides'
 
+import PostProcessOverlay from "./components/PostProcessOverlay"
+
 export default function InternetAtlas() {
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null)
   const navigate = useNavigate()
@@ -42,22 +44,25 @@ export default function InternetAtlas() {
 
   return (
     <div className="relative w-full h-screen bg-black text-white overflow-hidden">
+      {!selectedNode && (
+        <PostProcessOverlay />
+      )}
       {/* Corner plus symbols */}
-      <div className="absolute top-8 left-8">
+      <div className="absolute top-8 left-8 z-[11]">
         <Plus className="text-[#757575] w-8 h-8" />
       </div>
-      <div className="absolute top-8 right-8">
+      <div className="absolute top-8 right-8 z-[11]">
         <Plus className="text-[#757575] w-8 h-8" />
       </div>
-      <div className="absolute bottom-8 left-8">
+      <div className="absolute bottom-8 left-8 z-[11]">
         <Plus className="text-[#757575] w-8 h-8" />
       </div>
-      <div className="absolute bottom-8 right-8">
+      <div className="absolute bottom-8 right-8 z-[11]">
         <Plus className="text-[#757575] w-8 h-8" />
       </div>
 
       {/* Header */}
-      <div className="absolute top-8 left-24 flex items-center space-x-4">
+      <div className="absolute top-8 left-24 flex items-center space-x-4 z-[11]">
         <h1 className="text-[28px] tracking-wider handjet">INTERNET ATLAS</h1>
         <span className="text-[#757575] handjet text-[28px]">For the cyber voyagers</span>
       </div>
@@ -65,7 +70,7 @@ export default function InternetAtlas() {
       {/* Main content */}
       <div className="w-full h-full">
         {/* Force Graph - now spans full width */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-[11]">
           <ForceGraph 
             nodes={nodes} 
             links={links} 
@@ -76,7 +81,7 @@ export default function InternetAtlas() {
 
         {/* Right side - Slides */}
         {selectedNode && slides[selectedNode] && (
-          <div className="absolute right-0 w-1/2 h-full">
+          <div className="absolute right-0 w-1/2 h-full z-[11]">
             <SlideShow 
               slides={slides[selectedNode]} 
               selectedNode={selectedNode}

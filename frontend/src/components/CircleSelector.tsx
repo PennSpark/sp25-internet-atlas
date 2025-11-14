@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react';
 
 interface CircleSelectorProps {
   onSelect?: (value: string) => void;
@@ -8,99 +8,92 @@ interface CircleSelectorProps {
 }
 
 export default function CircleSelector({ onSelect, isLateral, selectedValue }: CircleSelectorProps) {
-  const radius = 250;
   const categories = ['piece', 'heavy', 'organic', 'ash', 'light', 'soft', 'silk', 'smooth', 'sharp', 'fuzzy'];
+  const radius = 250;
   const increment = 360 / categories.length;
-  const [angle, setAngle] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<number>(0);
+
   const circleRef = useRef<HTMLDivElement | null>(null);
   const isDragging = useRef(false);
   const startAngle = useRef(0);
   const initialAngle = useRef(0);
   const currentDragAngle = useRef(0);
 
-  useEffect(() => {
-    const newIndex = categories.indexOf(selectedValue);
-    if (newIndex !== -1 && newIndex !== selectedCategory) {
-      setSelectedCategory(newIndex);
-      setAngle(-newIndex * increment);
-    }
-  }, [selectedValue, selectedCategory, categories, increment]);
+  const selectedIndex = categories.indexOf(selectedValue);
+  const [angle, setAngle] = useState(-selectedIndex * increment);
 
+  // Sync angle with selectedValue on mount and update
   useEffect(() => {
+    const targetAngle = -categories.indexOf(selectedValue) * increment;
+    if (angle !== targetAngle) setAngle(targetAngle);
+  }, [selectedValue, categories, increment]);
+
+  // Apply transforms to children when angle or selection changes
+  useLayoutEffect(() => {
+    const centerIndex = categories.indexOf(selectedValue);
     if (circleRef.current) {
-      categories.forEach((_, index) => {
+      Array.from(circleRef.current.children).forEach((child, index) => {
         const baseAngle = index * increment;
-        const wordElement = circleRef.current!.children[index] as HTMLDivElement;
-        wordElement.style.transform = `rotate(${baseAngle}deg) translateY(-${radius}px)`;
-        if (index - selectedCategory === 1 || (index === 0 && selectedCategory === categories.length - 1)) {
-          wordElement.style.transform = `rotate(${baseAngle - increment * 0.3}deg) translateY(-${radius}px)`;
-        } else if (index - selectedCategory === -1 || (index === categories.length - 1 && selectedCategory === 0)) {
-          wordElement.style.transform = `rotate(${baseAngle + increment * 0.3}deg) translateY(-${radius}px)`;
+        const element = child as HTMLDivElement;
+        let rotation = baseAngle;
+
+        if (index === (centerIndex + 1) % categories.length) {
+          rotation -= increment * 0.3;
+        } else if (index === (centerIndex - 1 + categories.length) % categories.length) {
+          rotation += increment * 0.3;
         }
+
+        element.style.transform = `rotate(${rotation}deg) translateY(-${radius}px)`;
       });
     }
-  }, [increment, categories, radius, selectedCategory]);
+  }, [angle, selectedValue, categories, increment, radius]);
 
-  const getAngle = (mouseXPos: number, mouseYPos: number) => {
-    const circleCenterX = window.innerWidth / 2;
-    const circleCenterY = window.innerHeight / 2;
-    const xOffset = mouseXPos - circleCenterX;
-    const yOffset = mouseYPos - circleCenterY;
-    const angleRad = Math.atan2(yOffset, xOffset);
-    const angleDeg = (angleRad * 180) / Math.PI;
-    return angleDeg;
+  const getAngleFromMouse = (x: number, y: number) => {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    return Math.atan2(y - cy, x - cx) * (180 / Math.PI);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
-    startAngle.current = getAngle(e.clientX, e.clientY);
+    startAngle.current = getAngleFromMouse(e.clientX, e.clientY);
     initialAngle.current = angle;
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging.current) {
-      const newAngle = getAngle(e.clientX, e.clientY);
-      const deltaAngle = newAngle - startAngle.current;
-      const resultAngle = initialAngle.current - deltaAngle * 4;
-      setAngle(resultAngle);
-      currentDragAngle.current = resultAngle;
-      // Update for smooth dragging
-      startAngle.current = newAngle;
-      initialAngle.current = resultAngle;
-    }
+    if (!isDragging.current) return;
+    const current = getAngleFromMouse(e.clientX, e.clientY);
+    const delta = current - startAngle.current;
+    const updated = initialAngle.current - delta * 4;
+    setAngle(updated);
+    currentDragAngle.current = updated;
   }, []);
 
   const snapToNearestWord = useCallback(() => {
-    let rawAngle = (currentDragAngle.current % 360);
-    if (rawAngle < 0) rawAngle += 360;
+    let raw = currentDragAngle.current % 360;
+    if (raw < 0) raw += 360;
+    const nearest = Math.round(raw / increment) % categories.length;
+    const newIndex = (categories.length - nearest) % categories.length;
+    const newValue = categories[newIndex];
 
-    const nearestIndex = Math.round(rawAngle / increment);
-    const invertedIndex = ((categories.length - nearestIndex) % categories.length + categories.length) % categories.length;
-
-    if (invertedIndex !== selectedCategory) {
-      setSelectedCategory(invertedIndex);
-      setAngle(-invertedIndex * increment);
-      if (onSelect && categories[invertedIndex] !== selectedValue) {
-        onSelect(categories[invertedIndex]);
-      }
+    if (newValue !== selectedValue) {
+      onSelect?.(newValue);
     } else {
-      setAngle(-invertedIndex * increment); // still snap rotation even if no new select
+      setAngle(-newIndex * increment);
     }
-  }, [categories, increment, onSelect, selectedCategory, selectedValue]);
+  }, [categories, increment, onSelect, selectedValue]);
 
   const handleMouseUp = useCallback(() => {
-    isDragging.current = false;
-    snapToNearestWord();
+    if (isDragging.current) {
+      isDragging.current = false;
+      snapToNearestWord();
+    }
   }, [snapToNearestWord]);
 
   const handleWordClick = (index: number) => {
-    if (index !== selectedCategory) {
-      setSelectedCategory(index);
+    const value = categories[index];
+    if (value !== selectedValue) {
       setAngle(-index * increment);
-      if (onSelect && categories[index] !== selectedValue) {
-        onSelect(categories[index]);
-      }
+      onSelect?.(value);
     }
   };
 
@@ -119,36 +112,26 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
       onMouseDown={handleMouseDown}
     >
       <div
-        className="absolute w-[400px] h-[400px] rounded-[100%] bg-white"
-        style={{
-          transform: 'translate(-50%, -50%)',
-          left: '50%',
-          top: '50%',
-        }}
+        className="absolute w-[400px] h-[400px] rounded-[100%] bg-white large-shadow"
+        style={{ transform: 'translate(-50%, -50%)', left: '50%', top: '50%' }}
       />
       <div
         ref={circleRef}
         className="absolute flex justify-center items-center w-full h-full"
-        style={{
-          transform: `rotate(${angle}deg)`,
-          transformOrigin: 'center center',
-        }}
+        style={{ transform: `rotate(${angle}deg)`, transformOrigin: 'center center' }}
       >
         {categories.map((item, index) => (
           <div
             key={index}
             className="absolute text-center text-lg cursor-pointer select-none"
-            style={{
-              transformOrigin: 'center center',
-              transition: 'color 0.3s, opacity 0.3s',
-            }}
+            style={{ transformOrigin: 'center center', transition: 'color 0.3s, opacity 0.3s' }}
             onClick={() => handleWordClick(index)}
           >
             <p
               className={isLateral ? 'rotate-90' : 'rotate-180'}
               style={{
-                color: index === selectedCategory ? '#ffffff' : '#757575',
-                opacity: index === selectedCategory ? 1 : 0.7,
+                color: index === selectedIndex ? '#ffffff' : '#757575',
+                opacity: index === selectedIndex ? 1 : 0.7,
               }}
             >
               {item} <span className="text-xs ml-2 text-white opacity-100">{index + 1}</span>
@@ -157,6 +140,7 @@ export default function CircleSelector({ onSelect, isLateral, selectedValue }: C
         ))}
       </div>
 
+      {/* Pointer arrows */}
       <div
         className="absolute -top-18 w-[15px] h-[12px] rotate-180"
         style={{

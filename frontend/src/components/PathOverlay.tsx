@@ -75,7 +75,7 @@ export default function PathOverlay({ pathNodes, userId, setFrozen, clearPathNod
     >
       {/* translucent black background */}
       <rect x="0" y="0" width={windowSize.width} height={windowSize.height} 
-      fill="black" opacity="0.85"
+      fill="black" opacity="0.75"
       pointerEvents="none" />
 
       {/* animated path */}
@@ -120,7 +120,7 @@ export default function PathOverlay({ pathNodes, userId, setFrozen, clearPathNod
               key={node.id}
               cx={node.x}
               cy={node.y}
-              r={selectedNodeId === node.id ? 5 : 7}
+              r={selectedNodeId === node.id ? 3 : 6}
               fill="white" // ⭐ Red if selected
               stroke={selectedNodeId === node.id ? "#FF6363" : "none"}
               strokeWidth={selectedNodeId === node.id ? 5 : 0}
@@ -130,7 +130,9 @@ export default function PathOverlay({ pathNodes, userId, setFrozen, clearPathNod
                 console.log("Clicked node", node.id); // 🔥 Add this
                 setSelectedNodeId(node.id);
               }}
-            />
+            >
+              <title>{index}</title>
+            </circle>
           );
         }
       })}

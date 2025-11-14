@@ -51,7 +51,7 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
       {/* Close button */}
       <span 
         onClick={onClose}
-        className="absolute -top-10 right-2 handjet text-[80px] text-[#757575] hover:text-white transition-colors cursor-pointer"
+        className="absolute -top-5 right-2 handjet text-[60px] text-[#757575] hover:text-white transition-colors cursor-pointer"
       >
         ×
       </span>
@@ -68,7 +68,7 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
 
       {/* Content */}
       <div className="flex-grow overflow-auto">
-        <p className="text-white text-[16px] mb-8">{currentSlideData.content}</p>
+        <p className="text-white text-[16px] mb-8 font-inter">{currentSlideData.content}</p>
         {currentSlideData.figure && (
           <div className="mt-8">
             <img 
