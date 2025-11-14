@@ -14,10 +14,10 @@ export default function InternetAtlas() {
 
   // Define the nodes and links
   const nodes = [
-    { id: "purpose", name: "Our purpose", x: 0, y: 0 },
-    { id: "how", name: "How does it work?", x: 100, y: -100 },
-    { id: "involved", name: "Get Involved", x: 100, y: 0 },
-    { id: "team", name: "Our team", x: 100, y: 100 },
+    { id: "purpose", name: "Our purpose", x: 0, y: 0, isEnter: false },
+    { id: "how", name: "How does it work?", x: 100, y: -100, isEnter: false },
+    { id: "involved", name: "Get Involved", x: 100, y: 0, isEnter: false },
+    { id: "team", name: "Our team", x: 100, y: 100, isEnter: false },
     { id: "enter", name: "ENTER", x: -100, y: 0, isEnter: true }
   ]
 
