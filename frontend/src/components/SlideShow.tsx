@@ -35,19 +35,8 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
     }
   }
 
-  const getFigureNumber = () => {
-    // Count how many slides with figures come before the current slide
-    let figureCount = 0;
-    for (let i = 0; i <= currentSlide; i++) {
-      if (slides[i].figure) {
-        figureCount++;
-      }
-    }
-    return figureCount;
-  }
-
   return (
-    <div className="h-[70%] w-[75%] bg-black p-8 flex flex-col mx-auto mt-[15%] relative">
+    <div className="h-[70%] w-[80%] bg-black p-8 flex flex-col mx-auto mt-32 relative">
       {/* Close button */}
       <span 
         onClick={onClose}
@@ -59,22 +48,22 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
       {/* Header with figure number and title */}
       <div className="flex flex-col space-y-4 mb-8">
         <div className="flex items-center space-x-2">
-          <span className="text-[#757575] handjet text-[36px]">{String(currentSlide + 1).padStart(2, '0')}</span>
+          <h2 className="text-[#757575] handjet">{String(currentSlide + 1).padStart(2, '0')}</h2>
         </div>
         <div className="bg-white w-full py-[1px] px-4">
-          <h2 className="text-black handjet text-[26px]">{currentSlideData.title}</h2>
+          <h2 className="text-black handjet">{currentSlideData.title}</h2>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-grow overflow-auto">
+      <div className="flex-grow overflow-auto scrollbar-hide">
         <p className="text-white text-[16px] mb-8 font-inter">{currentSlideData.content}</p>
         {currentSlideData.figure && (
           <div className="mt-8">
             <img 
               src={currentSlideData.figure} 
               alt={`Figure for ${currentSlideData.title}`}
-              className="max-w-full"
+              className="flex-1 max-w-full"
             />
           </div>
         )}
@@ -91,15 +80,10 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
           }`}
         >
           <ChevronLeft className="w-4 h-4 text-[#757575]" />
-          <span className={`handjet text-[24px] ${currentSlide > 0 ? 'text-[#757575] hover:text-white transition-colors' : 'text-[#757575]'}`}>
+          <h2 className={`handjet text-[24px] ${currentSlide > 0 ? 'text-[#757575] hover:text-white transition-colors' : 'text-[#757575]'}`}>
             Back
-          </span>
+          </h2>
         </div>
-        {currentSlideData.figure && (
-          <div className="text-[#757575] text-[24px] handjet">
-            Fig {String(getFigureNumber()).padStart(2, '0')}
-          </div>
-        )}
         <div 
           onClick={currentSlide < slides.length - 1 ? handleNextSlide : undefined}
           className={`flex items-center space-x-2 ${
@@ -108,9 +92,9 @@ export default function SlideShow({ slides, selectedNode, onClose }: SlideShowPr
               : 'opacity-50 cursor-not-allowed'
           }`}
         >
-          <span className={`handjet text-[24px] ${currentSlide < slides.length - 1 ? 'text-[#757575] hover:text-white transition-colors' : 'text-[#757575]'}`}>
+          <h2 className={`handjet ${currentSlide < slides.length - 1 ? 'text-[#757575] hover:text-white transition-colors' : 'text-[#757575]'}`}>
             Next
-          </span>
+          </h2>
           <ChevronRight className="w-4 h-4 text-[24px] text-[#757575]" />
         </div>
       </div>

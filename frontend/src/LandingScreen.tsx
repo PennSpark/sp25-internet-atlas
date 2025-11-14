@@ -1,6 +1,5 @@
 "use client"
 
-import { Plus } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ForceGraph from './components/ForceGraph'
@@ -49,22 +48,34 @@ export default function InternetAtlas() {
       )}
       {/* Corner plus symbols */}
       <div className="absolute top-8 left-8 z-[11]">
-        <Plus className="text-[#757575] w-8 h-8" />
+        <h1 className="text-[#757575]">
+          +
+        </h1>
       </div>
       <div className="absolute top-8 right-8 z-[11]">
-        <Plus className="text-[#757575] w-8 h-8" />
+        <h1 className="text-[#757575]">
+          +
+        </h1>
       </div>
       <div className="absolute bottom-8 left-8 z-[11]">
-        <Plus className="text-[#757575] w-8 h-8" />
+        <h1 className="text-[#757575]">
+          +
+        </h1>
       </div>
       <div className="absolute bottom-8 right-8 z-[11]">
-        <Plus className="text-[#757575] w-8 h-8" />
+        <h1 className="text-[#757575]">
+          +
+        </h1>
       </div>
 
       {/* Header */}
-      <div className="absolute top-8 left-24 flex items-center space-x-4 z-[11]">
-        <h1 className="text-[28px] tracking-wider handjet">INTERNET ATLAS</h1>
-        <span className="text-[#757575] handjet text-[28px]">For the cyber voyagers</span>
+      <div className="absolute top-8 left-16 md:left-24 flex items-end space-x-1 md:space-x-4 z-[11]">
+        <h1 className="tracking-wider handjet">INTERNET ATLAS</h1>
+        <h2 className="hidden md:flex mb-[0.2rem] text-[#757575] handjet">How do we journey through the web?</h2>
+      </div>
+
+      <div className="absolute bottom-9.5 md:bottom-11 right-16 md:right-24 flex items-end z-[100]">
+        <h3 className="text-[#757575] handjet"><a href='https://pennspark.org/' target="_blank" className='cursor-pointer hover:text-white'>Penn Spark 2024</a></h3>
       </div>
 
       {/* Main content */}
@@ -81,7 +92,7 @@ export default function InternetAtlas() {
 
         {/* Right side - Slides */}
         {selectedNode && slides[selectedNode] && (
-          <div className="absolute right-0 w-1/2 h-full z-[11]">
+          <div className="absolute right-0 md:w-120 w-full h-full z-[11]">
             <SlideShow 
               slides={slides[selectedNode]} 
               selectedNode={selectedNode}

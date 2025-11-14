@@ -24,8 +24,8 @@ export interface Slide {
       },
       {
         title: "Step 1: Data Collection",
-        content: "We start with real browsing data from 2,148 users, using a public dataset shared by the NIH.",
-        figure: "/figure1.png"
+        content: "We start with real browsing data from 2,148 users, using a public dataset from a research study https://arxiv.org/abs/2012.15112.",
+        figure: "/slideshow-images/how-1.png"
       },
       {
         title: "Step 2: Data Processing",
