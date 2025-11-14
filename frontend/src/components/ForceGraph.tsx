@@ -8,7 +8,7 @@ interface Node extends d3.SimulationNodeDatum {
   name: string
   x?: number
   y?: number
-  isEnter?: boolean
+  isEnter: boolean
 }
 
 interface Link extends d3.SimulationLinkDatum<Node> {
@@ -62,8 +62,6 @@ const { augmentedNodes, augmentedLinks } = useMemo(() => {
   const newNodes: Node[] = nodes.map(n => ({ ...n }))
   const newLinks: Link[] = []
 
-  const center = newNodes.find(n => n.id === CENTER_ID)
-
   for (const link of links) {
     const a = normalizeId(link.source)
     const b = normalizeId(link.target)
@@ -111,7 +109,8 @@ const { augmentedNodes, augmentedLinks } = useMemo(() => {
         id: midId,
         name: "",
         x: mx + ox,
-        y: my + oy
+        y: my + oy,
+        isEnter: false
       }
       newNodes.push(midNode)
     }
@@ -302,7 +301,7 @@ const { augmentedNodes, augmentedLinks } = useMemo(() => {
 
     // non-enter nodes with icons (skip mid-nodes because they won't be in iconFiles)
     node
-      .filter(d => !d.isEnter && iconFiles[d.id])
+      .filter(d => !d.isEnter)
       .append("rect")
       .attr("class", "enter-button")
       .attr("x", -20)
